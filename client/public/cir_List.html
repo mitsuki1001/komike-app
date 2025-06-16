@@ -1,0 +1,50 @@
+<html>
+<head>
+  <meta charset="utf-8" />
+  <script src="https://unpkg.com/vue@3.0.0"></script>
+</head>
+<body>
+  <div id="app1">
+    <ul>
+      <template1 prop1 = "test"></template1>
+      <button v-on:click="map">会場マップ</button><br> <!--ボタンをクリックするとmapメソッドが実行される-->
+      <button v-on:click="home">ホーム</button><br> <!--ボタンをクリックするとhomeメソッドが実行される-->
+      <button v-on:click="Cir_List">サークル一覧</button><br> <!--ボタンをクリックするとCir_Listメソッドが実行される-->
+      <span v-if="seen">画像</span>
+    </ul>
+  </div>
+
+  <script>
+    const App1 = {
+      data() { //dataメソッドを定義 Vue.jsにこのデータを返すという宣言
+        return {
+          seen: true　//seenがtrueなら表示、falseなら非表示
+        }
+      },
+      methods: {
+        map: function(){
+          this.seen = false //seenをfalseにする offメソッドが実行されると、seenがfalseになり、ルフィが非表示になる
+          window.location.href ='C:\\2002248\\test\\testproject\\html\\map.html';
+        },
+        home: function(){
+          window.location.href ='C:\\2002248\\test\\testproject\\html\\home.html';
+        },
+        Cir_List: function(){
+          window.location.href ='C:\\2002248\\test\\testproject\\html\\cir_list.html';
+        }
+      }
+    } //Vueコンポーネントを定義
+    const app = Vue.createApp(App1) //Vueアプリケーションを作成
+
+    app.component('template1',{ //Vueコンポーネントを定義
+      props: ['prop1'],
+      template:`
+        <button v-on:click="map">{{prop1}}</button>
+        <br>
+      `
+    })
+    
+    app.mount('#app1') //VueアプリケーションをHTML要素にマウント
+</script>
+</body>
+</html>

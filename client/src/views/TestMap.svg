@@ -1,0 +1,16 @@
+<svg width="1000" height="300" xmlns="http://www.w3.org/2000/svg">
+  <!-- ブロックの例：A1〜A5 -->
+  <rect id="block-A1" x="0" y="0" width="20" height="20" fill="lightgray" stroke="black"/>
+  <rect id="block-A2" x="20" y="0" width="20" height="20" fill="lightgray" stroke="black"/>
+  <rect id="block-A3" x="40" y="0" width="20" height="20" fill="lightgray" stroke="black"/>
+  <rect id="block-A4" x="60" y="0" width="20" height="20" fill="lightgray" stroke="black"/>
+  <rect id="block-A5" x="80" y="0" width="20" height="20" fill="lightgray" stroke="black"/>
+  <!-- 必要に応じて続けてください -->
+
+  <!-- ラベル（任意） -->
+  <text x="2" y="15" font-size="10">A1</text>
+  <text x="22" y="15" font-size="10">A2</text>
+  <text x="42" y="15" font-size="10">A3</text>
+  <text x="62" y="15" font-size="10">A4</text>
+  <text x="82" y="15" font-size="10">A5</text>
+</svg>
