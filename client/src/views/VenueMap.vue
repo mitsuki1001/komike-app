@@ -94,6 +94,8 @@
 import axios from 'axios';
 import placeMap from '@/assets/placeMap.json';
 
+const baseURL = process.env.VUE_APP_API_BASE_URL
+
 export default {
   name: 'VenueMap',
   data() {
@@ -171,7 +173,7 @@ export default {
     }
   },
   mounted() {
-    axios.get('http://localhost:3000/circles')
+    axios.get(`${baseURL}/circles')
       .then(response => {
         this.circles = response.data;
       })

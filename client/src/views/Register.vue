@@ -49,6 +49,8 @@
 <script>
 import axios from 'axios';
 
+const baseURL = process.env.VUE_APP_API_BASE_URL
+
 export default {
   name: 'RegisterForm',
   data() {
@@ -83,7 +85,7 @@ export default {
           formData.append('menu', file);
         });
 
-        const response = await axios.post('http://localhost:3000/add-circle', formData, {
+        const response = await axios.post(`${baseURL}/circle', formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }

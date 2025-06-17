@@ -64,6 +64,8 @@
 <script>
 import axios from 'axios';
 
+const baseURL = process.env.VUE_APP_API_BASE_URL
+
 export default {
   name: 'CirclesList',
   data() {
@@ -97,7 +99,7 @@ export default {
   methods: {
     async fetchCircles() {
       try {
-        const response = await axios.get('http://localhost:3000/circles');
+        const response = await axios.get(`${baseURL}/circles`);
         this.circles = response.data;
       } catch (error) {
         console.error('一覧取得エラー:', error);
@@ -106,7 +108,7 @@ export default {
     async deleteCircle(id) {
       if (!confirm('本当に削除しますか？')) return;
       try {
-        await axios.delete(`http://localhost:3000/circle/${id}`);
+        await axios.delete(`${baseURL}/circle/${id}`);
         this.fetchCircles();
         alert('削除に成功しました。');
       } catch (error) {
@@ -117,7 +119,7 @@ export default {
     async markComplete(id) {
       if (!confirm('このサークルを完了状態にしますか？')) return;
       try {
-        await axios.put(`http://localhost:3000/circle/${id}/complete`);
+        await axios.put(`${baseURL}/circle/${id}/complete`);
         this.fetchCircles();
         alert('完了状態にしました。');
       } catch (error) {
@@ -128,7 +130,7 @@ export default {
     async unmarkComplete(id) {
       if (!confirm('このサークルの完了状態を取り消しますか？')) return;
       try {
-        await axios.put(`http://localhost:3000/circle/${id}/uncomplete`);
+        await axios.put(`${baseURL}/circle/${id}/uncomplete`);
         this.fetchCircles();
         alert('完了状態を取り消しました。');
       } catch (error) {

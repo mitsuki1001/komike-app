@@ -68,6 +68,8 @@
 <script>
 import axios from 'axios';
 
+const baseURL = process.env.VUE_APP_API_BASE_URL
+
 export default {
   name: 'CircleDetail',
   data() {
@@ -95,7 +97,7 @@ export default {
     async fetchCircle() {
       const id = this.$route.params.id;
       try {
-        const response = await axios.get(`http://localhost:3000/circle/${id}`);
+        const response = await axios.get(`${baseURL}/circle/${id}`);
         const data = response.data;
         if (typeof data.menu === 'string') {
           data.menu = JSON.parse(data.menu);
@@ -137,7 +139,7 @@ export default {
           formData.append('menu', file);
         });
 
-        const response = await axios.put(`http://localhost:3000/circle/${id}`, formData, {
+        const response = await axios.put(`${baseURL}/circle/${id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
 

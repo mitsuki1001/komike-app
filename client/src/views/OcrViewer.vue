@@ -39,7 +39,7 @@ export default {
       formData.append('image', this.selectedFile);
 
       try {
-        const response = await axios.post('http://localhost:3000/ocr', formData, {
+        const response = await axios.post(`${baseURL}/circle/ocr', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         this.recognizedText = response.data.text;
