@@ -173,7 +173,7 @@ export default {
     }
   },
   mounted() {
-    axios.get(`${baseURL}/circles')
+    axios.get(`${baseURL}/circles`)
       .then(response => {
         this.circles = response.data;
       })

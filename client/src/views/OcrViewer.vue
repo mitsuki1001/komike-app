@@ -16,6 +16,8 @@
 <script>
 import axios from 'axios';
 
+const baseURL = process.env.VUE_APP_API_BASE_URL
+
 export default {
   name: 'OcrViewer',
   data() {
@@ -39,7 +41,7 @@ export default {
       formData.append('image', this.selectedFile);
 
       try {
-        const response = await axios.post(`${baseURL}/circle/ocr', formData, {
+        const response = await axios.post(`${baseURL}/circle/ocr`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         this.recognizedText = response.data.text;

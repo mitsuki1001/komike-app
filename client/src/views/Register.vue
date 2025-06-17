@@ -85,7 +85,7 @@ export default {
           formData.append('menu', file);
         });
 
-        const response = await axios.post(`${baseURL}/circle', formData, {
+        const response = await axios.post(`${baseURL}/circle`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
