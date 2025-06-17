@@ -1,0 +1,6 @@
+services:
+  - type: static
+    name: komike-client
+    env: node
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
