@@ -85,14 +85,16 @@ export default {
         const place = circle.place || '';
         const registrant = circle.registrant || '';
         const day = circle.day || '';
+        const area = circle.area || '';
         const matchesQuery =
           name.toLowerCase().includes(query) ||
           place.toLowerCase().includes(query) ||
           registrant.toLowerCase().includes(query)
 
           const matchesDay = this.selectedDay === '' || day === this.selectedDay;
+          const matchesArea = this.selectedArea === '' || area === this.selectedArea;
 
-        return matchesQuery && matchesDay;
+        return matchesQuery && matchesDay && matchesArea;
       });
     }
   },
