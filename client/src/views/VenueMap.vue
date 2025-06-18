@@ -100,7 +100,7 @@ export default {
   name: 'VenueMap',
   data() {
     return {
-      scale: 1,
+      scale: 0.8,
       currentVenue: 0,
       circles: [],
       selectedDay: '1日目',
@@ -169,6 +169,9 @@ export default {
             };
           })
           .filter(Boolean);
+        }).sort((a, b) => {
+          // 場所（place）を文字コード順にソート
+          return a.place.localeCompare(b.place, 'ja');
       });
     }
   },
@@ -195,7 +198,7 @@ export default {
       }
     },
     resetZoom() {
-      this.scale = 1;
+      this.scale = 0.8;
       this.$refs.mapWrapper.scrollLeft = 0;
       this.$refs.mapWrapper.scrollTop = 0;
     },
