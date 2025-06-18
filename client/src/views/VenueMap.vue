@@ -261,10 +261,11 @@ export default {
   color: white;
 }
 
+
 .map-wrapper {
-  width: 90%;
-  max-width: 800px;
-  height: 60vh;
+  width: 80%;
+  max-width: 600px;
+  height: 50vh;
   margin: 0 auto;
   overflow: auto;
   border: 1px solid #ccc;
@@ -272,13 +273,18 @@ export default {
   background-color: #f8f8f8;
   user-select: none;
   cursor: grab;
+  padding: 0;
 }
+
 
 .map-inner {
   position: relative;
-  display: inline-block;
+  width: 100%;
+  display: block;
   transform-origin: top left;
   will-change: transform;
+  padding: 0;
+  margin: 0;
 }
 
 .map-and-info {
@@ -310,9 +316,13 @@ export default {
   margin-bottom: 8px;
 }
 
+
 .venue-map-image {
   display: block;
-  max-width: none;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 0;
 }
 
 .zoom-controls {
