@@ -262,10 +262,11 @@ export default {
 }
 
 
+
 .map-wrapper {
-  width: 80%;
-  max-width: 600px;
-  height: 50vh;
+  width: 90%;
+  max-width: 800px;
+  height: 60vh;
   margin: 0 auto;
   overflow: auto;
   border: 1px solid #ccc;
@@ -279,12 +280,11 @@ export default {
 
 .map-inner {
   position: relative;
-  width: 100%;
-  display: block;
+  display: inline-block;
   transform-origin: top left;
   will-change: transform;
-  padding: 0;
   margin: 0;
+  padding: 0;
 }
 
 .map-and-info {
@@ -317,9 +317,10 @@ export default {
 }
 
 
+
 .venue-map-image {
   display: block;
-  max-width: 100%;
+  max-width: none; /* ← 元のサイズを維持 */
   height: auto;
   margin: 0;
   padding: 0;
