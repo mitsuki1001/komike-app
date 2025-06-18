@@ -278,14 +278,17 @@ export default {
 }
 
 
+
 .map-inner {
-  position: relative;
-  display: inline-block;
+  position: absolute; /* ← 余白をなくすために absolute に変更 */
+  top: 0;
+  left: 0;
   transform-origin: top left;
   will-change: transform;
   margin: 0;
   padding: 0;
 }
+
 
 .map-and-info {
   display: flex;
