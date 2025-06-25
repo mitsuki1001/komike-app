@@ -127,7 +127,7 @@ export default {
     async calculateIndividualPayment() {
       if (!this.individualBuyer || !this.individualRegistrant) return;
 
-      const res = await axios.get(``${baseURL}/payment`, {
+      const res = await axios.get(`${baseURL}/payment`, {
         params: {
           buyer: this.individualBuyer,
           registrant: this.individualRegistrant,
