@@ -41,13 +41,13 @@ const pool = new Pool({
 // 新規登録
 app.post('/add-circle', upload.array('menu', 5), async (req, res) => {
   try {
-    const { name, place, amount, memo, registrant, area, day, priorityLabel, priorityValue, buyer, actualAmount } = req.body;
+    const { name, place, amount, memo, registrant, area, day } = req.body;
     const menuImages = req.files.map(file => file.buffer);
     const menuBase64Array = menuImages.map(buf => buf.toString('base64'));
 
     const query = `
-      INSERT INTO circle_tab (name, place, amount, memo, menu, registrant, area, day, priority_label, priority_value, buyer, actual_amount)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      INSERT INTO circle_tab (name, place, amount, memo, menu, registrant, area, day)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
     const result = await pool.query(query, [
@@ -58,11 +58,7 @@ app.post('/add-circle', upload.array('menu', 5), async (req, res) => {
       JSON.stringify(menuBase64Array),
       registrant,
       area,
-      day,
-      priorityLabel,
-      parseInt(priorityValue),
-      buyer,
-      actualAmount ? parseInt(actualAmount) : null
+      day
     ]);
     res.json(result.rows[0]);
   } catch (error) {
@@ -178,7 +174,7 @@ app.put('/circle/:id/uncomplete', async (req, res) => {
 app.put('/circle/:id', upload.array('menu', 5), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, place, amount, memo, existingMenu, registrant, area, day, priorityLabel, priorityValue, buyer, actualAmount } = req.body;
+    const { name, place, amount, memo, existingMenu, registrant, area, day } = req.body;
 
     let existingImages = [];
     if (existingMenu) {
@@ -195,8 +191,8 @@ app.put('/circle/:id', upload.array('menu', 5), async (req, res) => {
 
     const query = `
       UPDATE circle_tab
-      SET name = $1, place = $2, amount = $3, memo = $4, menu = $5, registrant = $6, area = $7, day = $8, priority_label = $9, priority_value = $10, buyer = $11, actual_amount = $12
-      WHERE id = $13
+      SET name = $1, place = $2, amount = $3, memo = $4, menu = $5, registrant = $6, area = $7, day = $8
+      WHERE id = $9
       RETURNING *
     `;
     const result = await pool.query(query, [
@@ -208,10 +204,6 @@ app.put('/circle/:id', upload.array('menu', 5), async (req, res) => {
       registrant,
       area,
       day,
-      priorityLabel,
-      priorityValue,
-      buyer,
-      actualAmount ? parseInt(actualAmount) : null,
       id
     ]);
 
@@ -249,147 +241,6 @@ app.post('/ocr', upload.single('image'), async (req, res) => {
   }
 });
 
-// 金額データを取得
-app.get('/settlement', async (req, res) => {
-  const { day } = req.query;
-
-  try {
-    let query = 'SELECT buyer, registrant, actual_amount, amount, day FROM circle_tab';
-    const params = [];
-
-    if (day) {
-      query += ' WHERE day = $1';
-      params.push(day);
-    }
-
-    const result = await pool.query(query, params);
-    const rows = result.rows;
-
-    const settlements = {};
-
-    rows.forEach(row => {
-      const { buyer, registrant, actual_amount, amount } = row;
-      if (!buyer || !registrant || buyer === registrant) return;
-
-      const actual = actual_amount ? parseInt(actual_amount) : 0;
-      const estimated = amount ? parseInt(amount) : 0;
-
-      if (!settlements[registrant]) {
-        settlements[registrant] = {
-          registrant,
-          payments: [],
-          actualTotal: 0,
-          estimatedTotal: 0
-        };
-      }
-
-      settlements[registrant].payments.push({
-        to: buyer,
-        actualAmount: actual,
-        amount: estimated,
-        day: row.day 
-      });
-
-      settlements[registrant].actualTotal += actual;
-      settlements[registrant].estimatedTotal += estimated;
-    });
-
-    res.json(Object.values(settlements));
-  } catch (error) {
-    console.error('精算集計エラー:', error.stack);
-    res.status(500).send('精算データの取得に失敗しました');
-  }
-});
-
-
-// 購入者と登録者一覧を取得
-app.get('/users', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT DISTINCT buyer, registrant FROM circle_tab');
-    const buyers = new Set();
-    const registrants = new Set();
-
-    result.rows.forEach(row => {
-      if (row.buyer) buyers.add(row.buyer);
-      if (row.registrant) registrants.add(row.registrant);
-    });
-
-    res.json({
-      buyers: Array.from(buyers),
-      registrants: Array.from(registrants)
-    });
-  } catch (error) {
-    console.error('ユーザー一覧取得エラー:', error.stack);
-    res.status(500).send('ユーザー一覧の取得に失敗しました');
-  }
-});
-
-// 精算計算
-app.get('/payment', async (req, res) => {
-  const { buyer, registrant, day } = req.query;
-
-  if (!buyer || !registrant) {
-    return res.status(400).send('buyerとregistrantを指定してください');
-  }
-
-  try {
-    // A → B の支払い
-    const conditionsAB = ['buyer = $1', 'registrant = $2'];
-    const valuesAB = [buyer, registrant];
-
-    if (day) {
-      conditionsAB.push('day = $3');
-      valuesAB.push(day);
-    }
-
-    const resultAB = await pool.query(
-      `SELECT actual_amount, amount FROM circle_tab WHERE ${conditionsAB.join(' AND ')}`,
-      valuesAB
-    );
-
-    // B → A の支払い（逆方向）
-    const conditionsBA = ['buyer = $1', 'registrant = $2'];
-    const valuesBA = [registrant, buyer];
-
-    if (day) {
-      conditionsBA.push('day = $3');
-      valuesBA.push(day);
-    }
-
-    const resultBA = await pool.query(
-      `SELECT actual_amount, amount FROM circle_tab WHERE ${conditionsBA.join(' AND ')}`,
-      valuesBA
-    );
-
-    let actualAB = 0;
-    let estimatedAB = 0;
-    resultAB.rows.forEach(row => {
-      actualAB += row.actual_amount ? parseInt(row.actual_amount) : 0;
-      estimatedAB += row.amount ? parseInt(row.amount) : 0;
-    });
-
-    let actualBA = 0;
-    let estimatedBA = 0;
-    resultBA.rows.forEach(row => {
-      actualBA += row.actual_amount ? parseInt(row.actual_amount) : 0;
-      estimatedBA += row.amount ? parseInt(row.amount) : 0;
-    });
-
-    // 相殺後の金額（A → B）
-    const netActual = actualAB - actualBA;
-    const netEstimated = estimatedAB - estimatedBA;
-
-    res.json({
-      from: registrant,
-      to: buyer,
-      actualAmount: netActual > 0 ? netActual : 0,
-      amount: netEstimated > 0 ? netEstimated : 0
-    });
-  } catch (error) {
-    console.error('個別精算取得エラー:', error.stack);
-    res.status(500).send('精算データの取得に失敗しました');
-  }
-});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {

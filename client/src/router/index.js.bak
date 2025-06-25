@@ -4,7 +4,6 @@ import CirclesList from '@/views/Circles.vue';
 import CircleDetail from '@/views/CircleDetail.vue';
 import VenueMap from '@/views/VenueMap.vue';
 import OcrViewer from '@/views/OcrViewer.vue';
-import Settlement from '@/views/Settlement.vue';
 
 
 const routes = [
@@ -33,11 +32,6 @@ const routes = [
     path: '/ocr',
     name: 'OcrViewer',
     component: OcrViewer
-  },
-  {
-    path: '/settlement',
-    name: 'SettlementPage',
-    component: Settlement
   }
 ];
 

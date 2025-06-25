@@ -9,19 +9,15 @@
       <p>サークル名: {{ circle.name }}</p>
       <p>エリア: {{ circle.area }}</p>
       <p>場所: {{ circle.place }}</p>
-      <p>優先度: {{ circle.priority_label }}</p>
       <p>金額: {{ circle.amount }}</p>
       <p>メモ: {{ circle.memo }}</p>
       <p>登録者: {{ circle.registrant }}</p>
-      <p>購入者: {{ circle.buyer || '未入力' }}</p>
-      <p>購入金額: {{ circle.actual_amount != null ? circle.actual_amount + '円' : '未入力' }}</p>
 
       <div v-if="circle.menu && circle.menu.length">
         <img
           :src="`data:image/png;base64,${circle.menu[currentImageIndex]}`"
           alt="Menu Image"
           style="max-width: 200px;"
-          @click="openImageModal(circle.menu[currentImageIndex])"
         />
         <div>
           <button @click="prevImage" :disabled="currentImageIndex === 0">←</button>
@@ -31,11 +27,6 @@
       </div>
 
       <button @click="isEditing = true">編集</button>
-    </div>
-
-    <!-- モーダル表示 -->
-    <div v-if="showImageModal" class="modal-overlay" @click="closeImageModal">
-      <img :src="modalImageSrc" class="modal-image" />
     </div>
 
     <!-- 編集モード -->
@@ -48,20 +39,10 @@
         <label>エリア:</label>
         <label><input type="radio" value="東" v-model="form.area" required /> 東</label>
         <label><input type="radio" value="西" v-model="form.area" required /> 西</label>
-        <label><input type="radio" value="南" v-model="form.area" required /> 南</label>
         <label>Place: <input v-model="form.place" required /></label><br />
-        <label for="priority">優先度:</label>
-        <select id="priority" v-model="form.priorityLabel" @change="updatePriorityValue">
-          <option value="最優先">最優先</option>
-          <option value="できれば">できれば</option>
-          <option value="余裕があれば">余裕があれば</option>
-          <option value="不要になった">不要になった</option>
-        </select><br />
         <label>Amount: <input v-model.number="form.amount" type="number" required /></label><br />
         <label>Memo: <textarea v-model="form.memo"></textarea></label><br />
         <label>登録者: <input v-model="form.registrant" required /></label><br />
-        <label>購入者: <input v-model="form.buyer" /></label><br />
-        <label>購入金額: <input v-model.number="form.actualAmount" type="number" /></label><br />
 
         <div>
           <p>既存画像（削除可能）:</p>
@@ -103,31 +84,16 @@ export default {
         memo: '',
         registrant: '',
         area: '',
-        day: '',
-        priorityLabel: '最優先',
-        priorityValue: 10,
-        buyer: '',
-        actualAmount: null
-      },
-      priorityMap: {
-        '最優先': 10,
-        'できれば': 7,
-        '余裕があれば': 4,
-        '不要になった': 1
+        day: ''
       },
       editableImages: [], // 編集用の既存画像
-      newMenuFiles: [],
-      showImageModal: false,
-      modalImageSrc: ''
+      newMenuFiles: []
     };
   },
   created() {
     this.fetchCircle();
   },
   methods: {
-    updatePriorityValue() {
-      this.form.priorityValue = this.priorityMap[this.form.priorityLabel];
-    },
     async fetchCircle() {
       const id = this.$route.params.id;
       try {
@@ -144,11 +110,7 @@ export default {
           memo: data.memo,
           registrant: data.registrant,
           area: data.area,
-          day: data.day,
-          priorityLabel: data.priorityLabel || '最優先',
-          priorityValue: data.priorityValue || 10,
-          buyer: data.buyer || '',
-          actualAmount: data.actualAmount || null
+          day: data.day
         };
         this.editableImages = [...data.menu];
       } catch (error) {
@@ -173,10 +135,6 @@ export default {
         formData.append('registrant', this.form.registrant);
         formData.append('existingMenu', JSON.stringify(this.editableImages));
         formData.append('day', this.form.day); // ← 追加
-        formData.append('priorityLabel', this.form.priorityLabel);
-        formData.append('priorityValue', this.form.priorityValue);
-        formData.append('buyer', this.form.buyer);
-        formData.append('actualAmount', this.form.actualAmount);
         this.newMenuFiles.forEach(file => {
           formData.append('menu', file);
         });
@@ -208,9 +166,7 @@ export default {
         memo: this.circle.memo,
         registrant: this.circle.registrant,
         area: this.circle.area,
-        day: this.circle.day,
-        buyer: this.circle.buyer || '',
-        actualAmount: this.circle.actualAmount || null
+        day: this.circle.day
       };
       this.editableImages = [...this.circle.menu];
       this.newMenuFiles = [];
@@ -220,15 +176,7 @@ export default {
     },
     nextImage() {
       if (this.currentImageIndex < this.circle.menu.length - 1) this.currentImageIndex++;
-    },
-    openImageModal(src) {
-      this.modalImageSrc = `data:image/png;base64,${src}`;
-      this.showImageModal = true;
-    },
-    closeImageModal() {
-      this.showImageModal = false;
-      this.modalImageSrc = '';
-    },
+    }
   }
 };
 </script>
@@ -244,25 +192,4 @@ form label {
 button {
   margin: 5px;
 }
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.modal-image {
-  max-width: 90%;
-  max-height: 90%;
-  border-radius: 8px;
-  box-shadow: 0 0 10px #000;
-}
-
 </style>

@@ -2,59 +2,98 @@
   <div>
     <h1>登録済み サークル 一覧</h1>
 
+    <!-- 進捗バー  -->
+    <div class="progress-wrapper">
+      <div class="progress-label">完了数：{{ filteredCompletedCount }} / {{ filteredCircles.length }}</div>
+      <div class="progress-container">
+        <div class="progress-bar" :style="{ width: filteredProgressPercentage + '%' }"></div>
+      </div>
+    </div>
+
     <!-- 🔍 検索ボックス -->
     <input
       type="text"
       v-model="searchQuery"
       placeholder="サークル名・場所・登録者で検索"
       class="search-box"
+      @focus="showSuggestions = true"
+      @blur="hideSuggestionsWithDelay"
     />
+    <ul v-if="showSuggestions && searchHistory.length" class="suggestions-list">
+      <li v-for="query in searchHistory" :key="query" @mousedown.prevent="applySearch(query)">
+        {{ query }}
+      </li>
+    </ul>
 
-    <!-- 📅 日付フィルター -->
-    <div class="day-filter-buttons">
-      <button @click="selectedDay = ''">すべて</button>
-      <button @click="selectedDay = '1日目'">1日目</button>
-      <button @click="selectedDay = '2日目'">2日目</button>
-    </div>
-    
-    <div class="area-filter-buttons">
-      <button @click="selectedArea = ''">すべて</button>
-      <button @click="selectedArea = '東'">東</button>
-      <button @click="selectedArea = '西'">西</button>
-      <button @click="selectedArea = '南'">南</button>
-    </div>
+    <!-- 📅 フィルター -->
+    <div class="filter-group">
+      <label>
+        日付:
+        <select v-model="selectedDay">
+          <option value="">すべて</option>
+          <option value="1日目">1日目</option>
+          <option value="2日目">2日目</option>
+        </select>
+      </label>
 
-    <!-- 🏷️ 凡例 -->
-    <div class="circle-row legend">
-      <span>サークル名</span>
-      <span>エリア</span>
-      <span>場所</span>
-      <span>金額</span>
-      <span>登録者</span>
-      <span>日付</span>
-      <span>操作</span>
+      <label>
+        エリア:
+        <select v-model="selectedArea">
+          <option value="">すべて</option>
+          <option value="東">東</option>
+          <option value="西">西</option>
+          <option value="南">南</option>
+        </select>
+      </label>
+
+      <label>
+        優先度:
+        <select v-model="selectedPriority">
+          <option value="">すべて</option>
+          <option value="最優先">最優先</option>
+          <option value="できれば">できれば</option>
+          <option value="余裕があれば">余裕があれば</option>
+          <option value="不要になった">不要になった</option>
+        </select>
+      </label>
+
+      <label>
+        完了状態:
+        <select v-model="selectedCompletion">
+          <option value="">すべて</option>
+          <option value="completed">完了</option>
+          <option value="incomplete">未完了</option>
+        </select>
+      </label>
     </div>
 
     <!-- 📋 一覧 -->
     <ul>
-      <li
-        v-for="circle in filteredCircles"
-        :key="circle.id"
-        :class="{ completed: circle.completed }"
-      >
+      <li v-for="circle in filteredCircles" :key="circle.id" :class="{ completed: circle.completed }">
         <div class="circle-row">
-          <span>{{ circle.name }}</span>
-          <span>{{ circle.area }}</span>
-          <span>{{ circle.place }}</span>
-          <span>{{ circle.amount }}</span>
-          <span>{{ circle.registrant }}</span>
-          <span>{{ circle.day }}</span>
-          <span>
-            <router-link :to="{ name: 'CircleDetail', params: { id: circle.id } }">詳細</router-link>
-            <button @click="deleteCircle(circle.id)">削除</button>
-            <button v-if="!circle.completed" @click="markComplete(circle.id)">完了</button>
-            <button v-else @click="unmarkComplete(circle.id)">取消</button>
-          </span>
+          <div @click="circle.expanded = !circle.expanded" class="summary">
+            <router-link
+              :to="{ name: 'CircleDetail', params: { id: circle.id } }"
+              class="circle-name-link">
+              {{ circle.name }}
+            </router-link>
+             - {{ circle.area }} {{ circle.place }}
+            <span :class="['priority-label', circle.priority_label]">{{ circle.priority_label }}</span>
+            <span v-if="circle.completed" class="completed-label">✅ 完了</span>
+          </div>
+
+          <div v-if="circle.expanded" class="details">
+            <span>金額: {{ circle.amount }}円</span>
+            <span>登録者: {{ circle.registrant }}</span>
+            <span>日付: {{ circle.day }}</span>
+            <div class="action-buttons">
+              <!-- ボタン類 -->
+              <button @click="deleteCircle(circle.id)">削除</button>
+              <button v-if="!circle.completed" @click="markComplete(circle.id)">完了</button>
+              <button v-else @click="unmarkComplete(circle.id)">取消</button>
+              <button @click="goToMap(circle)">マップ</button>
+            </div>
+          </div>
         </div>
       </li>
     </ul>
@@ -73,7 +112,11 @@ export default {
       circles: [],
       searchQuery: '',
       selectedDay: '',
-      selectedArea: '' 
+      selectedArea: '',
+      selectedPriority: '',
+      selectedCompletion: '',
+      searchHistory: [],
+      showSuggestions: false
     };
   },
   
@@ -86,16 +129,28 @@ export default {
         const registrant = circle.registrant || '';
         const day = circle.day || '';
         const area = circle.area || '';
+        const priorityLabel = circle.priority_label || '';
         const matchesQuery =
           name.toLowerCase().includes(query) ||
           place.toLowerCase().includes(query) ||
-          registrant.toLowerCase().includes(query)
-
-          const matchesDay = this.selectedDay === '' || day === this.selectedDay;
-          const matchesArea = this.selectedArea === '' || area === this.selectedArea;
-
-        return matchesQuery && matchesDay && matchesArea;
+          registrant.toLowerCase().includes(query);
+        const matchesDay = this.selectedDay === '' || day === this.selectedDay;
+        const matchesArea = this.selectedArea === '' || area === this.selectedArea;
+        const matchesPriority = this.selectedPriority === '' || priorityLabel === this.selectedPriority;
+        const matchesCompletion =
+          this.selectedCompletion === '' ||
+          (this.selectedCompletion === 'completed' && circle.completed) ||
+          (this.selectedCompletion === 'incomplete' && !circle.completed);
+        return matchesQuery && matchesDay && matchesArea && matchesPriority && matchesCompletion;
       });
+    },
+    filteredCompletedCount() {
+      return this.filteredCircles.filter(c => c.completed).length;
+    },
+    filteredProgressPercentage() {
+      return this.filteredCircles.length === 0
+      ? 0
+      : Math.round((this.filteredCompletedCount / this.filteredCircles.length) * 100);
     }
   },
   methods: {
@@ -139,10 +194,67 @@ export default {
         console.error('完了取消エラー:', error);
         alert('取消に失敗しました。');
       }
+    },
+    goToMap(circle) {
+      this.$router.push({
+        name: 'VenueMap',
+        query: {
+          id: circle.id,
+          place: circle.place,
+          day: circle.day
+        }
+      });
+    },
+    applySearch(query) {
+      this.searchQuery = query;
+      this.showSuggestions = false;
+    },
+    hideSuggestionsWithDelay() {
+      // blur の直後にクリックがある場合に備えて少し遅らせる
+      setTimeout(() => {
+        this.showSuggestions = false;
+      }, 100);
+    },
+    updateSearchHistory(query) {
+      if (!query) return;
+      if (!this.searchHistory.includes(query)) {
+        this.searchHistory.unshift(query);
+        if (this.searchHistory.length > 10) this.searchHistory.pop();
+        localStorage.setItem('searchHistory', JSON.stringify(this.searchHistory));
+      }
     }
   },
   created() {
     this.fetchCircles();
+
+    // 検索条件の復元
+    this.searchQuery = localStorage.getItem('searchQuery') || '';
+    this.selectedDay = localStorage.getItem('selectedDay') || '';
+    this.selectedArea = localStorage.getItem('selectedArea') || '';
+    this.selectedPriority = localStorage.getItem('selectedPriority') || '';
+    this.selectedCompletion = localStorage.getItem('selectedCompletion') || '';
+
+    // 履歴の読み込み
+    const history = localStorage.getItem('searchHistory');
+    this.searchHistory = history ? JSON.parse(history) : [];
+  },
+  watch: {
+    searchQuery(newVal) {
+      localStorage.setItem('searchQuery', newVal);
+      this.updateSearchHistory(newVal);
+    },
+    selectedDay(newVal) {
+      localStorage.setItem('selectedDay', newVal);
+    },
+    selectedArea(newVal) {
+      localStorage.setItem('selectedArea', newVal);
+    },
+    selectedPriority(newVal) {
+      localStorage.setItem('selectedPriority', newVal);
+    },
+    selectedCompletion(newVal) {
+      localStorage.setItem('selectedCompletion', newVal);
+    }
   }
 };
 </script>
@@ -156,20 +268,22 @@ export default {
   font-size: 1rem;
 }
 
-.day-filter-buttons {
-  margin-bottom: 1rem;
-}
-.day-filter-buttons button {
-  margin-right: 10px;
-  padding: 5px 10px;
-  font-size: 1rem;
-  cursor: pointer;
+.filter-group label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.5rem;
 }
 
-.area-filter-buttons {
-  margin-bottom: 1rem;
+.filter-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
 }
-.area-filter-buttons button {
+
+.filter-row {
+  margin-bottom: 0.5rem;
+}
+.filter-row button {
   margin-right: 10px;
   padding: 5px 10px;
   font-size: 1rem;
@@ -182,34 +296,136 @@ ul {
 }
 
 li {
-  margin-bottom: 0.5rem;
-  border-bottom: 1px solid #ccc;
+  margin-bottom: 1rem;
 }
 
 .circle-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
 }
 
 .circle-row span {
-  flex: 1;
-  text-align: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  word-break: break-word;
 }
 
-.legend {
-  font-weight: bold;
-  border-bottom: 2px solid #333;
-  background-color: #f0f0f0;
+.action-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+.action-buttons button {
+  flex: 1;
+  padding: 10px;
+  font-size: 1rem;
+  min-width: 100px;
+}
+
+.action-buttons button,
+.action-buttons a {
+  width: 50%;
+  padding: 5px;
+  font-size: 1rem;
 }
 
 .completed {
-  background-color: #eee;
+  background-color: #f0f0f0;
+  
 }
 
-button {
-  margin-left: 5px;
+
+.completed-label {
+  color: green;
+  font-weight: bold;
+  margin-left: 10px;
 }
+
+li.completed .circle-row {
+  background-color: #f0f0f0;
+}
+
+.details span {
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+@media (min-width: 601px) {
+  .circle-row {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    background-color: #fff;
+  }
+
+  .circle-row span {
+    flex: 1;
+    text-align: center;
+    margin-bottom: 0;
+  }
+
+  .action-buttons {
+    flex-direction: row;
+    gap: 5px;
+  }
+
+  .action-buttons button,
+  .action-buttons a {
+    width: auto;
+  }
+}
+
+.progress-wrapper {
+  margin-bottom: 1rem;
+}
+
+.progress-label {
+  font-weight: bold;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.progress-container {
+  background-color: #eee;
+  border-radius: 5px;
+  height: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar {
+  background-color: #4caf50;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.suggestions-list {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  width: 100%;
+  z-index: 10;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.suggestions-list li {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.suggestions-list li:hover {
+  background-color: #f0f0f0;
+}
+
 </style>

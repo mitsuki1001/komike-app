@@ -39,9 +39,6 @@
         @mousemove="onDrag"
         @mouseup="endDrag"
         @mouseleave="endDrag"
-        @touchstart="onTouchStart"
-        @touchmove="onTouchMove"
-        @touchend="onTouchEnd"
       >
         <div
           class="map-inner"
@@ -60,26 +57,25 @@
             v-for="marker in visibleCircles"
             :key="marker.id"
             class="marker"
-            :class="[getPriorityClass(marker), { completed: marker.completed, highlighted: marker.highlighted }]"
+            :class="{ completed: marker.completed }"
             :style="{
-            top: marker.coords.y + 'px',
-            left: marker.coords.x + 'px',
-            width: marker.coords.width + 'px',
-            height: marker.coords.height + 'px'
+              top: marker.coords.y + 'px',
+              left: marker.coords.x + 'px',
+              width: marker.coords.width + 'px',
+              height: marker.coords.height + 'px'
             }"
-          />          
+          >
+          </div>
         </div>
       </div>
       <div class="circle-info-list">
         <h2>サークル一覧</h2>
         <ul>
           <li v-for="marker in visibleCircles" :key="marker.id">
-            <button @click="focusOnMarker(marker)" class="map-button">場所</button>
             <strong>{{ marker.place }}</strong>:
             <router-link :to="{ name: 'CircleDetail', params: { id: marker.id.split('_')[0] } }">
               {{ marker.name }}
             </router-link>
-            <span v-if="marker.completed" class="completed-label">✅</span>
           </li>
         </ul>
       </div>
@@ -105,8 +101,6 @@ export default {
   data() {
     return {
       scale: 0.7,
-      initialPinchDistance: null,
-      isPinching: false,
       currentVenue: 0,
       circles: [],
       selectedDay: '1日目',
@@ -150,9 +144,7 @@ export default {
       const venue = this.venues[this.currentVenue];
       const filterChar = venue.filter;
       const validKeys = Object.keys(placeMap);
-      const targetId = this.$route.query.id;
-      const targetPlace = this.$route.query.place;
-
+    
       return this.circles.flatMap(circle => {
         if (circle.day !== this.selectedDay) return [];
     
@@ -170,12 +162,10 @@ export default {
               console.warn(`placeMap に座標が見つかりません: ${code}`);
               return null;
             }
-            const isHighlighted = circle.id === targetId && circle.place === targetPlace;
             return {
               ...circle,
               id: `${circle.id}_${code}`,
-              coords,
-              highlighted: isHighlighted
+              coords
             };
           })
           .filter(Boolean);
@@ -193,76 +183,8 @@ export default {
       .catch(error => {
         console.error('データ取得エラー:', error);
       });
-    axios.get(`${baseURL}/circles`)
-      .then(response => {
-        this.circles = response.data;
-      })
-      .then(() => {
-        const targetId = this.$route.query.id;
-        const targetPlace = this.$route.query.place;
-        const targetDay = this.$route.query.day;
-
-        if (targetId && targetPlace && targetDay) {
-          this.selectedDay = targetDay;
-
-          const venueIndex = this.venues.findIndex(venue => {
-            const firstChar = targetPlace[0];
-            return venue.filter(firstChar);
-          });
-          
-          if (venueIndex !== -1) {
-            this.currentVenue = venueIndex;
-          }
-
-          this.$nextTick(() => {
-            const targetMarker = this.visibleCircles.find(c =>
-              c.id.startsWith(targetId) && c.place === targetPlace
-            );
-
-            if (targetMarker && this.$refs.mapWrapper) {
-              const wrapper = this.$refs.mapWrapper;
-              const markerX = targetMarker.coords.x * this.scale;
-              const markerY = targetMarker.coords.y * this.scale;
-
-              // 中央にスクロールするように調整
-              wrapper.scrollLeft = markerX - wrapper.clientWidth / 2;
-              wrapper.scrollTop = markerY - wrapper.clientHeight / 2;
-            }
-          });
-        }
-      })
-      .catch(error => {
-        console.error('データ取得エラー:', error);
-      });
   },
   methods: {
-    // 距離計算
-    getTouchDistance(touches) {
-      const [touch1, touch2] = touches;
-      const dx = touch2.clientX - touch1.clientX;
-      const dy = touch2.clientY - touch1.clientY;
-      return Math.sqrt(dx * dx + dy * dy);
-    },
-    onTouchStart(e) {
-      if (e.touches.length === 2) {
-        this.isPinching = true;
-        this.initialPinchDistance = this.getTouchDistance(e.touches);
-      }
-    },
-    onTouchMove(e) {
-      if (this.isPinching && e.touches.length === 2) {
-        const currentDistance = this.getTouchDistance(e.touches);
-        const scaleFactor = currentDistance / this.initialPinchDistance;
-        this.scale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3); // 最小0.5〜最大3倍
-        this.initialPinchDistance = currentDistance;
-      }
-    },
-    onTouchEnd(e) {
-      if (e.touches.length < 2) {
-        this.isPinching = false;
-        this.initialPinchDistance = null;
-      }
-    },
     setVenue(index) {
       this.currentVenue = index;
       this.resetZoom();
@@ -299,32 +221,6 @@ export default {
     },
     endDrag() {
       this.dragging = false;
-    },
-    getPriorityClass(marker) {
-      if (marker.completed) return 'completed'; // 完了状態を最優先
-
-      switch (marker.priority_label) {
-        case '最優先':
-          return 'priority-high';
-        case 'できれば':
-          return 'priority-medium';
-        case '余裕があれば':
-          return 'priority-low';
-        case '不要になった':
-          return 'priority-none';
-        default:
-          return '';
-      }
-    },
-    focusOnMarker(marker) {
-      const wrapper = this.$refs.mapWrapper;
-      if (!wrapper || !marker.coords) return;
-
-      const markerX = marker.coords.x * this.scale;
-      const markerY = marker.coords.y * this.scale;
-
-      wrapper.scrollLeft = markerX - wrapper.clientWidth / 2;
-      wrapper.scrollTop = markerY - wrapper.clientHeight / 2;
     }
   }
 };
@@ -447,49 +343,16 @@ export default {
 
 .marker {
   position: absolute;
-  background-color: rgba(255, 0, 0, 0.5); /* 通常色: 赤 */
+  background-color: rgba(255, 0, 0, 0.5); /* 通常色 */
   border: 1px solid red;
   pointer-events: none;
 }
 
-.marker.priority-high {
-  background-color: rgba(255, 0, 0, 0.6); /* 最優先: 赤 */
-  border: 1px solid red;
-}
-
-.marker.priority-medium {
-  background-color: rgba(255, 165, 0, 0.6); /* できれば: オレンジ */
-  border: 1px solid orange;
-}
-
-.marker.priority-low {
-  background-color: rgba(255, 255, 0, 0.6); /* 余裕があれば: 黄色 */
-  border: 1px solid gold;
-}
-
-.marker.priority-none {
-  background-color: rgba(128, 128, 128, 0.8); /* 不要になった: グレー */
-  border: 1px solid gray;
-}
-
 .marker.completed {
-  background-color: rgba(0, 128, 0, 0.6); /* 完了: 緑 */
+  background-color: rgba(0, 128, 0, 0.5); /* 完了状態は緑色 */
   border: 1px solid green;
 }
 
-.completed-label {
-  margin-left: 8px;
-  color: green;
-  font-weight: bold;
-}
-
-.map-button {
-  margin-left: 1px;
-  margin-right: 5px;
-  padding: 2px 4px;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
 
 /* スマホ対応 */
 @media (max-width: 600px) {

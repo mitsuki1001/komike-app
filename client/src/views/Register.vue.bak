@@ -30,15 +30,6 @@
         <input id="amount" v-model.number="form.amount" type="number" required />
       </div>
       <div>
-        <label for="priority">優先度:</label>
-        <select id="priority" v-model="form.priorityLabel" @change="updatePriorityValue">
-          <option value="最優先">最優先</option>
-          <option value="できれば">できれば</option>
-          <option value="余裕があれば">余裕があれば</option>
-          <option value="不要になった">不要になった</option>
-        </select>
-      </div>
-      <div>
         <label for="memo">メモ:</label>
         <textarea id="memo" v-model="form.memo"></textarea>
       </div>
@@ -71,15 +62,7 @@ export default {
         memo: '',
         registrant: '',
         area: '',
-        day:'',
-        priorityLabel: '最優先',
-        priorityValue: 10
-      },
-      priorityMap: {
-        '最優先': 10,
-        'できれば': 7,
-        '余裕があれば': 4,
-        '不要になった': 1
+        day:''
       },
       menuFiles: []
     };
@@ -97,8 +80,6 @@ export default {
         formData.append('place', this.form.place);
         formData.append('amount', this.form.amount);
         formData.append('memo', this.form.memo);
-        formData.append('priorityLabel', this.form.priorityLabel);
-        formData.append('priorityValue', this.form.priorityValue);
         formData.append('registrant', this.form.registrant);
         this.menuFiles.forEach(file => {
           formData.append('menu', file);
