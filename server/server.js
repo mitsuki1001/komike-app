@@ -3,6 +3,8 @@ const { Pool } = require('pg');
 const cors = require('cors');
 const multer = require('multer');
 const Tesseract = require('tesseract.js');
+const path = require('path');
+
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -36,15 +38,6 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
-});
-
-
-// 静的ファイルの提供（Reactなどのビルド済みファイル）
-app.use(express.static(path.join(__dirname, 'public')));
-
-// すべての未定義ルートを index.html にフォールバック
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // 新規登録
@@ -398,6 +391,14 @@ app.get('/payment', async (req, res) => {
     console.error('個別精算取得エラー:', error.stack);
     res.status(500).send('精算データの取得に失敗しました');
   }
+});
+
+// 静的ファイルの提供（Reactなどのビルド済みファイル）
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// すべての未定義ルートを index.html にフォールバック
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
