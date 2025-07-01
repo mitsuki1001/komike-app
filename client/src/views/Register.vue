@@ -98,7 +98,7 @@ export default {
         formData.append('amount', this.form.amount);
         formData.append('memo', this.form.memo);
         formData.append('priorityLabel', this.form.priorityLabel);
-        formData.append('priorityValue', this.form.priorityValue);
+        formData.append('priorityValue', this.priorityMap[this.form.priorityLabel]);
         formData.append('registrant', this.form.registrant);
         this.menuFiles.forEach(file => {
           formData.append('menu', file);
@@ -112,7 +112,17 @@ export default {
 
         console.log('登録成功:', response.data);
         alert('登録が完了しました。');
-        this.form = { name: '', place: '', amount: null, memo: '' };
+        this.form = {
+          name: '',
+          place: '',
+          amount: null,
+          memo: '',
+          registrant: '',
+          area: '',
+          day: '',
+          priorityLabel: '最優先',
+          priorityValue: 10
+        };
         this.menuFiles = [];
       } catch (error) {
         console.error('登録エラー:', error);
@@ -166,6 +176,5 @@ button {
   white-space: nowrap;
   width: 100px;
 }
-
 
 </style>

@@ -91,7 +91,7 @@ export default {
     async addCircle() {
       try {
         const formData = new FormData();
-        formData.append('day', this.form.day); // ← 追加
+        formData.append('day', this.form.day);
         formData.append('name', this.form.name);
         formData.append('area', this.form.area);
         formData.append('place', this.form.place);
