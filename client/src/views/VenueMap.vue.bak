@@ -33,17 +33,15 @@
     <div class="map-and-info">
       <!-- ズーム・パン対応マップ -->
       <div
-          class="map-wrapper"
-          ref="mapWrapper"
-          @mousedown="startDrag"
-          @mousemove="onDrag"
-          @mouseup="endDrag"
-          @mouseleave="endDrag"
-          @touchstart.passive="false"
-          @touchmove.passive="false"
-          @touchstart="onTouchStart"
-          @touchmove="onTouchMove"
-          @touchend="onTouchEnd"
+        class="map-wrapper"
+        ref="mapWrapper"
+        @mousedown="startDrag"
+        @mousemove="onDrag"
+        @mouseup="endDrag"
+        @mouseleave="endDrag"
+        @touchstart="onTouchStart"
+        @touchmove="onTouchMove"
+        @touchend="onTouchEnd"
       >
         <div
           class="map-inner"
@@ -148,7 +146,7 @@ export default {
     },
     visibleCircles() {
       if (!this.circles) return [];
-
+    
       const venue = this.venues[this.currentVenue];
       const filterChar = venue.filter;
       const validKeys = Object.keys(placeMap);
@@ -157,10 +155,10 @@ export default {
 
       return this.circles.flatMap(circle => {
         if (circle.day !== this.selectedDay) return [];
-
+    
         const matchedCodes = validKeys.filter(code => circle.place.includes(code));
         console.log('matchedCodes:', matchedCodes);
-
+    
         return matchedCodes
           .filter(code => {
             const firstChar = code[0];
@@ -247,14 +245,12 @@ export default {
     },
     onTouchStart(e) {
       if (e.touches.length === 2) {
-        e.preventDefault(); // ブラウザのピンチズームを防ぐ
         this.isPinching = true;
         this.initialPinchDistance = this.getTouchDistance(e.touches);
       }
     },
     onTouchMove(e) {
       if (this.isPinching && e.touches.length === 2) {
-        e.preventDefault(); // ブラウザのピンチズームを防ぐ
         const currentDistance = this.getTouchDistance(e.touches);
         const scaleFactor = currentDistance / this.initialPinchDistance;
         this.scale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3); // 最小0.5〜最大3倍
@@ -369,6 +365,8 @@ export default {
   color: white;
 }
 
+
+
 .map-wrapper {
   width: 90%;
   max-width: 800px;
@@ -381,10 +379,9 @@ export default {
   user-select: none;
   cursor: grab;
   padding: 0;
-
-  /* 追加: スクロールは有効、ズームはJSで制御 */
-  touch-action: pan-x pan-y;
 }
+
+
 
 .map-inner {
   position: absolute; /* ← 余白をなくすために absolute に変更 */
@@ -395,6 +392,7 @@ export default {
   margin: 0;
   padding: 0;
 }
+
 
 .map-and-info {
   display: flex;
@@ -425,15 +423,14 @@ export default {
   margin-bottom: 8px;
 }
 
+
+
 .venue-map-image {
   display: block;
   max-width: none; /* ← 元のサイズを維持 */
   height: auto;
   margin: 0;
   padding: 0;
-
-  /* 追加: タッチイベントをブロックしない */
-  pointer-events: none;
 }
 
 .zoom-controls {
@@ -446,6 +443,7 @@ export default {
   cursor: pointer;
   font-size: 1rem;
 }
+
 
 .marker {
   position: absolute;

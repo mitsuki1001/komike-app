@@ -49,7 +49,7 @@
         <label><input type="radio" value="東" v-model="form.area" required /> 東</label>
         <label><input type="radio" value="西" v-model="form.area" required /> 西</label>
         <label><input type="radio" value="南" v-model="form.area" required /> 南</label>
-        <label>場所: <input v-model="form.place" required /></label><br />
+        <label>Place: <input v-model="form.place" required /></label><br />
         <label for="priority">優先度:</label>
         <select id="priority" v-model="form.priorityLabel" @change="updatePriorityValue">
           <option value="最優先">最優先</option>
@@ -57,11 +57,11 @@
           <option value="余裕があれば">余裕があれば</option>
           <option value="不要になった">不要になった</option>
         </select><br />
-        <label>金額: <input v-model.number="form.amount" type="number" required /></label><br />
-        <label>メモ: <textarea v-model="form.memo"></textarea></label><br />
+        <label>Amount: <input v-model.number="form.amount" type="number" required /></label><br />
+        <label>Memo: <textarea v-model="form.memo"></textarea></label><br />
         <label>登録者: <input v-model="form.registrant" required /></label><br />
         <label>購入者: <input v-model="form.buyer" /></label><br />
-        <label>購入金額: <input v-model.number="form.actualAmount" type="number" required /></label><br />
+        <label>購入金額: <input v-model.number="form.actualAmount" type="number" /></label><br />
 
         <div>
           <p>既存画像（削除可能）:</p>
@@ -166,30 +166,17 @@ export default {
       try {
         const formData = new FormData();
         formData.append('name', this.form.name);
-        formData.append('area', this.form.area);
+        formData.append('area', this.form.area); 
         formData.append('place', this.form.place);
         formData.append('amount', this.form.amount);
         formData.append('memo', this.form.memo);
         formData.append('registrant', this.form.registrant);
-        formData.append('day', this.form.day);
+        formData.append('existingMenu', JSON.stringify(this.editableImages));
+        formData.append('day', this.form.day); // ← 追加
         formData.append('priorityLabel', this.form.priorityLabel);
         formData.append('priorityValue', this.form.priorityValue);
         formData.append('buyer', this.form.buyer);
         formData.append('actualAmount', this.form.actualAmount);
-
-        // ✅ 既存画像（Base64）を Blob に変換して追加
-        this.editableImages.forEach((base64, index) => {
-          const byteString = atob(base64);
-          const arrayBuffer = new ArrayBuffer(byteString.length);
-          const intArray = new Uint8Array(arrayBuffer);
-          for (let i = 0; i < byteString.length; i++) {
-            intArray[i] = byteString.charCodeAt(i);
-          }
-          const blob = new Blob([intArray], { type: 'image/png' });
-          formData.append('menu', blob, `existing-${index}.png`);
-        });
-
-        // ✅ 新規画像ファイルも追加
         this.newMenuFiles.forEach(file => {
           formData.append('menu', file);
         });
