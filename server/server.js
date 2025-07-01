@@ -394,11 +394,11 @@ app.get('/payment', async (req, res) => {
 });
 
 // 静的ファイルの提供（Reactなどのビルド済みファイル）
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '..', 'client', 'public')));
 
 // すべての未定義ルートを index.html にフォールバック
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'client', 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
