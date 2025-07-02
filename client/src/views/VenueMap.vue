@@ -255,19 +255,35 @@ export default {
     },
     onTouchMove(e) {
       if (this.isPinching && e.touches.length === 2) {
-        e.preventDefault(); // ブラウザのピンチズームを防ぐ
+        e.preventDefault();
+
         const currentDistance = this.getTouchDistance(e.touches);
         const scaleFactor = currentDistance / this.initialPinchDistance;
-        const newScale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);// 最小0.5〜最大3倍
-        
+        const newScale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);
+
         const center = this.getTouchCenter(e.touches);
-        const wrapperRect = this.$refs.mapWrapper.getBoundingClientRect();
+        const wrapper = this.$refs.mapWrapper;
+        const wrapperRect = wrapper.getBoundingClientRect();
+
         const originX = center.x - wrapperRect.left;
         const originY = center.y - wrapperRect.top;
 
+        // スクロール補正のためのズーム前の相対位置
+        const scrollLeftBefore = wrapper.scrollLeft;
+        const scrollTopBefore = wrapper.scrollTop;
+        const offsetX = (originX + scrollLeftBefore) / this.scale;
+        const offsetY = (originY + scrollTopBefore) / this.scale;
+
+        // スケールと transformOrigin を更新
         this.transformOrigin = `${originX}px ${originY}px`;
         this.scale = newScale;
         this.initialPinchDistance = currentDistance;
+
+        this.$nextTick(() => {
+          // ズーム後の相対位置に合わせてスクロールを補正
+          wrapper.scrollLeft = offsetX * this.scale - originX;
+          wrapper.scrollTop = offsetY * this.scale - originY;
+        });
       }
     },
     onTouchEnd(e) {
