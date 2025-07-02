@@ -261,41 +261,41 @@ export default {
     onTouchMove(e) {
       if (this.isPinching && e.touches.length === 2) {
         e.preventDefault();
-
+        
         const currentDistance = this.getTouchDistance(e.touches);
         const scaleFactor = currentDistance / this.initialPinchDistance;
         const newScale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);
-
+        
         const center = this.getTouchCenter(e.touches);
         const wrapper = this.$refs.mapWrapper;
         const image = this.$refs.mapImage;
         const imageRect = image.getBoundingClientRect();
         // const wrapperRect = wrapper.getBoundingClientRect();
-
+        
         // ピンチ中心点を画像内の相対座標に変換（ズーム前）
         const imageX = (center.x - imageRect.left) / this.scale;
         const imageY = (center.y - imageRect.top) / this.scale;
-
-        // transformOrigin を画像内の相対座標で設定
+        
+        // transform-origin を画像内の相対座標で設定
         this.transformOrigin = `${imageX}px ${imageY}px`;
-
-        // ズーム前のスクロール位置におけるピンチ中心の位置
-        const scrollXBefore = imageX * this.scale;
-        const scrollYBefore = imageY * this.scale;
-
+        
         // スケール更新
+        const oldScale = this.scale;
         this.scale = newScale;
         this.initialPinchDistance = currentDistance;
-
+        
         this.$nextTick(() => {
-          // ズーム後のスクロール位置におけるピンチ中心の位置
-          const scrollXAfter = imageX * this.scale;
-          const scrollYAfter = imageY * this.scale;
-
-          // wrapper のスクロール位置を補正
-          const deltaX = scrollXAfter - scrollXBefore;
-          const deltaY = scrollYAfter - scrollYBefore;
-
+          // ズーム後の画像の位置を再取得
+          const newImageRect = image.getBoundingClientRect();
+          
+          // ズーム後のピンチ中心がどこにあるか
+          const newCenterX = newImageRect.left + imageX * this.scale;
+          const newCenterY = newImageRect.top + imageY * this.scale;
+          
+          // ピンチ中心がズーム前と同じ位置に来るようにスクロール補正
+          const deltaX = newCenterX - center.x;
+          const deltaY = newCenterY - center.y;
+          
           wrapper.scrollLeft += deltaX;
           wrapper.scrollTop += deltaY;
         });
