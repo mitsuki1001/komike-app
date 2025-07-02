@@ -269,7 +269,7 @@ export default {
         const center = this.getTouchCenter(e.touches);
         const wrapper = this.$refs.mapWrapper;
         const image = this.$refs.mapImage;
-        const wrapperRect = wrapper.getBoundingClientRect();
+        // const wrapperRect = wrapper.getBoundingClientRect();
         const imageRect = image.getBoundingClientRect();
 
         // ピンチ中心点を画像内の相対座標に変換（ズーム前）
@@ -289,8 +289,8 @@ export default {
 
         this.$nextTick(() => {
           // ズーム後の画像内の絶対座標を計算
-          const newImageX = imageX * this.scale;
-          const newImageY = imageY * this.scale;
+          const afterZoomX = imageX * this.scale;
+          const afterZoomY = imageY * this.scale;
 
           // スクロール補正：ピンチ中心が画面上の同じ位置に来るように
           const scrollLeft = wrapper.scrollLeft + (afterZoomX - beforeZoomX);
