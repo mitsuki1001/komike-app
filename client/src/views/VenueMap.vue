@@ -114,7 +114,7 @@ export default {
       selectedDay: '1日目',
       dragging: false,
       dragStart: { x: 0, y: 0, scrollLeft: 0, scrollTop: 0 },
-      taransformOrifin: 'top left',
+      taransformOrigin: 'top left',
       venues: [
         {
           name: '東456',
