@@ -114,7 +114,7 @@ export default {
       selectedDay: '1日目',
       dragging: false,
       dragStart: { x: 0, y: 0, scrollLeft: 0, scrollTop: 0 },
-      taransformOrigin: 'top left',
+      transformOrigin: 'top left',
       venues: [
         {
           name: '東456',
@@ -389,12 +389,13 @@ export default {
   height: 60vh;
   margin: 0 auto;
   overflow: auto;
-  border: 1px solid #ccc;
+  /* border: 1px solid #ccc; */
   position: relative;
   background-color: #f8f8f8;
   user-select: none;
   cursor: grab;
-  padding: 0;
+  padding: 0 !important;
+  margin: 0 !important;
 
   /* 追加: スクロールは有効、ズームはJSで制御 */
   touch-action: pan-x pan-y;
@@ -405,8 +406,8 @@ export default {
   top: 0;
   left: 0;
   will-change: transform;
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .map-and-info {
@@ -439,11 +440,15 @@ export default {
 }
 
 .venue-map-image {
-  display: block;
+  /* display: block; */
   max-width: none; /* ← 元のサイズを維持 */
   height: auto;
-  margin: 0;
-  padding: 0;
+  top: 0;
+  left: 0;
+  position: absolute;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
 
   /* 追加: タッチイベントをブロックしない */
   pointer-events: none;
