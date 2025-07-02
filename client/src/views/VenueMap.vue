@@ -293,8 +293,8 @@ export default {
           const newImageY = imageY * this.scale;
 
           // スクロール補正：ピンチ中心が画面上の同じ位置に来るように
-          const scrollLeft = newImageX - (center.x - wrapperRect.left);
-          const scrollTop = newImageY - (center.y - wrapperRect.top);
+          const scrollLeft = wrapper.scrollLeft + (afterZoomX - beforeZoomX);
+          const scrollTop = wrapper.scrollTop + (afterZoomY - beforeZoomY);
 
           wrapper.scrollLeft = scrollLeft;
           wrapper.scrollTop = scrollTop;
