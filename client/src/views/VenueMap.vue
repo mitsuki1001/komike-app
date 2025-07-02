@@ -280,7 +280,7 @@ export default {
         this.transformOrigin = `${imageX}px ${imageY}px`;
         
         // スケール更新
-        const oldScale = this.scale;
+        // const oldScale = this.scale;
         this.scale = newScale;
         this.initialPinchDistance = currentDistance;
         
