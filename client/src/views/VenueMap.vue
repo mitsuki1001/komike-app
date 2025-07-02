@@ -269,8 +269,8 @@ export default {
         const center = this.getTouchCenter(e.touches);
         const wrapper = this.$refs.mapWrapper;
         const image = this.$refs.mapImage;
-        // const wrapperRect = wrapper.getBoundingClientRect();
         const imageRect = image.getBoundingClientRect();
+        const wrapperRect = wrapper.getBoundingClientRect();
 
         // ピンチ中心点を画像内の相対座標に変換（ズーム前）
         const imageX = (center.x - imageRect.left) / this.scale;
@@ -279,25 +279,25 @@ export default {
         // transformOrigin を画像内の相対座標で設定
         this.transformOrigin = `${imageX}px ${imageY}px`;
 
-        // スクロール補正のためにズーム前の位置を保存
-        const beforeZoomX = imageX * this.scale;
-        const beforeZoomY = imageY * this.scale;
+        // ズーム前のスクロール位置におけるピンチ中心の位置
+        const scrollXBefore = imageX * this.scale;
+        const scrollYBefore = imageY * this.scale;
 
         // スケール更新
         this.scale = newScale;
         this.initialPinchDistance = currentDistance;
 
         this.$nextTick(() => {
-          // ズーム後の画像内の絶対座標を計算
-          const afterZoomX = imageX * this.scale;
-          const afterZoomY = imageY * this.scale;
+          // ズーム後のスクロール位置におけるピンチ中心の位置
+          const scrollXAfter = imageX * this.scale;
+          const scrollYAfter = imageY * this.scale;
 
-          // スクロール補正：ピンチ中心が画面上の同じ位置に来るように
-          const scrollLeft = wrapper.scrollLeft + (afterZoomX - beforeZoomX);
-          const scrollTop = wrapper.scrollTop + (afterZoomY - beforeZoomY);
+          // wrapper のスクロール位置を補正
+          const deltaX = scrollXAfter - scrollXBefore;
+          const deltaY = scrollYAfter - scrollYBefore;
 
-          wrapper.scrollLeft = scrollLeft;
-          wrapper.scrollTop = scrollTop;
+          wrapper.scrollLeft += deltaX;
+          wrapper.scrollTop += deltaY;
         });
       }
     },
@@ -429,7 +429,7 @@ export default {
 }
 
 .map-inner {
-  position: absolute; /* ← 余白をなくすために absolute に変更 */
+  position: relative; /* ← 余白をなくすために absolute に変更 */
   top: 0;
   left: 0;
   will-change: transform;
@@ -469,6 +469,7 @@ export default {
 
 .venue-map-image {
   /* display: block; */
+  position: absolute;
   max-width: none; /* ← 元のサイズを維持 */
   height: auto;
   top: 0;
