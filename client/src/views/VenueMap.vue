@@ -114,7 +114,7 @@ export default {
       selectedDay: '1日目',
       dragging: false,
       dragStart: { x: 0, y: 0, scrollLeft: 0, scrollTop: 0 },
-      transformOrigin: 'top left',
+      transformOrigin: 'center center',
       venues: [
         {
           name: '東456',
@@ -246,6 +246,11 @@ export default {
       const dy = touch2.clientY - touch1.clientY;
       return Math.sqrt(dx * dx + dy * dy);
     },
+    getTouchCenter(touches) {
+      const x = (touches[0].clientX + touches[1].clientX) / 2;
+      const y = (touches[0].clientY + touches[1].clientY) / 2;
+      return { x, y };
+    },
     onTouchStart(e) {
       if (e.touches.length === 2) {
         e.preventDefault(); // ブラウザのピンチズームを防ぐ
@@ -360,11 +365,6 @@ export default {
 
       wrapper.scrollLeft = markerX - wrapper.clientWidth / 2;
       wrapper.scrollTop = markerY - wrapper.clientHeight / 2;
-    },
-    getTouchCenter(touches) {
-      const x = (touches[0].clientX + touches[1].clientX) / 2;
-      const y = (touches[0].clientY + touches[1].clientY) / 2;
-      return { x, y };
     }
   }
 };
@@ -413,14 +413,14 @@ export default {
   overflow: auto;
   /* border: 1px solid #ccc; */
   position: relative;
-  background-color: #f8f8f8;
+  background-color: transparent;
   user-select: none;
   cursor: grab;
   padding: 0 !important;
   margin: 0 !important;
 
   /* 追加: スクロールは有効、ズームはJSで制御 */
-  touch-action: pan-x pan-y;
+  touch-action: none;
 }
 
 .map-inner {
@@ -430,6 +430,7 @@ export default {
   will-change: transform;
   margin: 0 !important;
   padding: 0 !important;
+  transform-origin: center center;
 }
 
 .map-and-info {
