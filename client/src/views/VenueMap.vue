@@ -279,6 +279,10 @@ export default {
         // transformOrigin を画像内の相対座標で設定
         this.transformOrigin = `${imageX}px ${imageY}px`;
 
+        // スクロール補正のためにズーム前の位置を保存
+        const beforeZoomX = imageX * this.scale;
+        const beforeZoomY = imageY * this.scale;
+
         // スケール更新
         this.scale = newScale;
         this.initialPinchDistance = currentDistance;
@@ -317,6 +321,7 @@ export default {
     },
     resetZoom() {
       this.scale = 0.7;
+      this.transformOrigin = 'center center';
       this.$refs.mapWrapper.scrollLeft = 0;
       this.$refs.mapWrapper.scrollTop = 0;
     },
@@ -420,7 +425,7 @@ export default {
   margin: 0 !important;
 
   /* 追加: スクロールは有効、ズームはJSで制御 */
-  touch-action: none;
+  touch-action: pan-x pan-y;
 }
 
 .map-inner {
