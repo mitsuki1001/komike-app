@@ -49,7 +49,7 @@
           class="map-inner"
           :style="{
             transform: `scale(${scale})`,
-            transformOrigin: 'top left'
+            transformOrigin: transformOrigin
           }"
         >
           <img
@@ -114,6 +114,7 @@ export default {
       selectedDay: '1日目',
       dragging: false,
       dragStart: { x: 0, y: 0, scrollLeft: 0, scrollTop: 0 },
+      taransformOrifin: 'top left',
       venues: [
         {
           name: '東456',
@@ -257,7 +258,15 @@ export default {
         e.preventDefault(); // ブラウザのピンチズームを防ぐ
         const currentDistance = this.getTouchDistance(e.touches);
         const scaleFactor = currentDistance / this.initialPinchDistance;
-        this.scale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3); // 最小0.5〜最大3倍
+        const newScale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);// 最小0.5〜最大3倍
+        
+        const center = this.getTouchCenter(e.touches);
+        const wrapperRect = this.$refs.mapWrapper.getBoundingClientRect();
+        const originX = center.x - wrapperRect.left;
+        const originY = center.y - wrapperRect.top;
+
+        this.transformOrigin = `${originX}px ${originY}px`;
+        this.scale = newScale;
         this.initialPinchDistance = currentDistance;
       }
     },
@@ -329,6 +338,11 @@ export default {
 
       wrapper.scrollLeft = markerX - wrapper.clientWidth / 2;
       wrapper.scrollTop = markerY - wrapper.clientHeight / 2;
+    },
+    getTouchCenter(touches) {
+      const x = (touches[0].clientX + touches[1].clientX) / 2;
+      const y = (touches[0].clientY + touches[1].clientY) / 2;
+      return { x, y };
     }
   }
 };
@@ -390,7 +404,6 @@ export default {
   position: absolute; /* ← 余白をなくすために absolute に変更 */
   top: 0;
   left: 0;
-  transform-origin: top left;
   will-change: transform;
   margin: 0;
   padding: 0;
