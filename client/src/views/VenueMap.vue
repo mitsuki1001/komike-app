@@ -267,24 +267,28 @@ export default {
         const wrapperRect = wrapper.getBoundingClientRect();
         const imageRect = image.getBoundingClientRect();
 
-        // ピンチ中心点を画像内の座標に変換
-        const offsetX = (center.x - imageRect.left) / this.scale;
-        const offsetY = (center.y - imageRect.top) / this.scale;
+        // ピンチ中心点を画像内の相対座標に変換（ズーム前）
+        const imageX = (center.x - imageRect.left) / this.scale;
+        const imageY = (center.y - imageRect.top) / this.scale;
 
-        // transformOrigin を更新
-        this.transformOrigin = `${offsetX}px ${offsetY}px`;
+        // transformOrigin を画像内の相対座標で設定
+        this.transformOrigin = `${imageX}px ${imageY}px`;
 
         // スケール更新
         this.scale = newScale;
         this.initialPinchDistance = currentDistance;
 
         this.$nextTick(() => {
-          // ズーム後のスクロール位置を補正
-          const newScrollLeft = offsetX * this.scale - (center.x - wrapperRect.left);
-          const newScrollTop = offsetY * this.scale - (center.y - wrapperRect.top);
+          // ズーム後の画像内の絶対座標を計算
+          const newImageX = imageX * this.scale;
+          const newImageY = imageY * this.scale;
 
-          wrapper.scrollLeft = newScrollLeft;
-          wrapper.scrollTop = newScrollTop;
+          // スクロール補正：ピンチ中心が画面上の同じ位置に来るように
+          const scrollLeft = newImageX - (center.x - wrapperRect.left);
+          const scrollTop = newImageY - (center.y - wrapperRect.top);
+
+          wrapper.scrollLeft = scrollLeft;
+          wrapper.scrollTop = scrollTop;
         });
       }
     },
