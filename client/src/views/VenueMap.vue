@@ -49,9 +49,7 @@
           class="map-inner"
           :style="{
             transform: `scale(${scale})`,
-            transformOrigin: transformOrigin,
-            width: scaledWidth + 'px',
-            height: scaledHeight + 'px'
+            transformOrigin: transformOrigin
           }"
         >
           <img
@@ -188,14 +186,6 @@ export default {
           // 場所（place）を文字コード順にソート
           return a.place.localeCompare(b.place, 'ja');
       });
-    },
-    scaledWidth() {
-      const image = this.$refs.mapImage;
-      return image ? image.naturalWidth * this.scale : 0;
-    },
-    scaledHeight() {
-      const image = this.$refs.mapImage;
-      return image ? image.naturalHeight * this.scale : 0;
     }
   },
   mounted() {
