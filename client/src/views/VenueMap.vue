@@ -270,7 +270,7 @@ export default {
         const wrapper = this.$refs.mapWrapper;
         const image = this.$refs.mapImage;
         const imageRect = image.getBoundingClientRect();
-        const wrapperRect = wrapper.getBoundingClientRect();
+        // const wrapperRect = wrapper.getBoundingClientRect();
 
         // ピンチ中心点を画像内の相対座標に変換（ズーム前）
         const imageX = (center.x - imageRect.left) / this.scale;
