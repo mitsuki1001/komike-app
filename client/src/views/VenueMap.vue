@@ -256,38 +256,32 @@ export default {
         e.preventDefault(); // ブラウザのピンチズームを防ぐ
         this.isPinching = true;
         this.initialPinchDistance = this.getTouchDistance(e.touches);
+        
+        // ピンチ中心を取得
+        const center = this.getTouchCenter(e.touches);
+        const wrapperRect = this.$refs.mapWrapper.getBoundingClientRect();
 
-        this.transformOrigin = 'center center'; // 中央固定
+        // ピンチ中心を mapWrapper 内の相対座標に変換
+        const originX = center.x - wrapperRect.left;
+        const originY = center.y - wrapperRect.top;
+
+        // transformOrigin をピンチ中心に設定
+        this.transformOrigin = `${originX}px ${originY}px`;
+
+        // this.transformOrigin = 'center center'; // 中央固定
       }
     },
     onTouchMove(e) {
       if (this.isPinching && e.touches.length === 2) {
         e.preventDefault();
-
-        const wrapper = this.$refs.mapWrapper;
-        const image = this.$refs.mapImage;
-
-        const prevScale = this.scale;
+        
         const currentDistance = this.getTouchDistance(e.touches);
         const scaleFactor = currentDistance / this.initialPinchDistance;
-        const newScale = Math.min(Math.max(prevScale * scaleFactor, 0.5), 3);
-
-        // スクロール補正のための中心座標（表示領域の中心）
-        // const wrapperRect = wrapper.getBoundingClientRect();
-        // const imageRect = image.getBoundingClientRect();
-
-        const centerX = wrapper.scrollLeft + wrapper.clientWidth / 2;
-        const centerY = wrapper.scrollTop + wrapper.clientHeight / 2;
-
-        // スケール変更による差分
-        const scaleDiff = newScale / prevScale;
-
-        // スクロール位置を補正
-        wrapper.scrollLeft = centerX * scaleDiff - wrapper.clientWidth / 2;
-        wrapper.scrollTop = centerY * scaleDiff - wrapper.clientHeight / 2;
-
+        this.scale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);
+        
         // スケール更新
-        this.scale = newScale;
+        // const oldScale = this.scale;
+        // this.scale = newScale;
         this.initialPinchDistance = currentDistance;
       }
     },
