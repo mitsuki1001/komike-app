@@ -108,7 +108,7 @@ export default {
   name: 'VenueMap',
   data() {
     return {
-      scale: 1,
+      scale: 0.7,
       initialPinchDistance: null,
       isPinching: false,
       currentVenue: 0,
@@ -125,25 +125,29 @@ export default {
           name: '東456',
           image: require('@/assets/east_456.jpg'),
           prefix: 'ア',
-          filter: char => /^[ア-ヨ]$/.test(char)
+          filter: char => /^[ア-ヨ]$/.test(char),
+          minScale: 0.5
         },
         {
           name: '東7',
           image: require('@/assets/east_7.jpg'),
           prefix: 'A',
-          filter: char => /^[A-W]$/.test(char)
+          filter: char => /^[A-W]$/.test(char),
+          minScale: 0.3
         },
         {
           name: '西12',
           image: require('@/assets/west_12.jpg'),
           prefix: 'あ',
-          filter: char => /^[あ-め]$/.test(char)
+          filter: char => /^[あ-め]$/.test(char),
+          minScale: 0.3
         },
         {
           name: '南12',
           image: require('@/assets/south_12.jpg'),
           prefix: 'a',
-          filter: char => /^[a-t]$/.test(char)
+          filter: char => /^[a-t]$/.test(char),
+          minScale: 0.7
         }
       ]
     };
@@ -151,6 +155,9 @@ export default {
   computed: {
     currentImage() {
       return this.venues[this.currentVenue].image;
+    },
+    minScale() {
+      return this.venues[this.currentVenue].minScale || 0.5;
     },
     visibleCircles() {
       if (!this.circles) return [];
@@ -292,7 +299,7 @@ export default {
 
         const currentDistance = this.getTouchDistance(e.touches);
         const scaleFactor = currentDistance / this.initialPinchDistance;
-        const newScale = Math.min(Math.max(this.scale * scaleFactor, 0.3), 3);
+        const newScale = Math.min(Math.max(this.scale * scaleFactor, this.minScale), 3);
 
         const center = this.getTouchCenter(e.touches);
         const wrapper = this.$refs.mapWrapper;
@@ -348,7 +355,7 @@ export default {
       }
     },
     resetZoom() {
-      this.scale = 1;
+      this.scale = 0.7;
       this.transformOrigin = 'center center';
       this.$refs.mapWrapper.scrollLeft = 0;
       this.$refs.mapWrapper.scrollTop = 0;
