@@ -256,6 +256,20 @@ export default {
         e.preventDefault(); // ブラウザのピンチズームを防ぐ
         this.isPinching = true;
         this.initialPinchDistance = this.getTouchDistance(e.touches);
+
+        // 表示領域の中心を transform-origin に設定
+        const wrapper = this.$refs.mapWrapper;
+        const image = this.$refs.mapImage;
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const imageRect = image.getBoundingClientRect();
+
+        const centerX = wrapperRect.left + wrapperRect.width / 2;
+        const centerY = wrapperRect.top + wrapperRect.height / 2;
+
+        const imageX = (centerX - imageRect.left) / this.scale;
+        const imageY = (centerY - imageRect.top) / this.scale;
+
+        this.transformOrigin = `${imageX}px ${imageY}px`;
       }
     },
     onTouchMove(e) {
@@ -266,16 +280,6 @@ export default {
         const scaleFactor = currentDistance / this.initialPinchDistance;
         const newScale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);
         
-        /*const center = this.getTouchCenter(e.touches);
-        const wrapper = this.$refs.mapWrapper;
-        const image = this.$refs.mapImage;
-        const imageRect = image.getBoundingClientRect();
-        // const wrapperRect = wrapper.getBoundingClientRect();*/
-        
-        // ピンチ中心点を画像内の相対座標に変換（ズーム前）
-        // const imageX = (center.x - imageRect.left) / this.scale;
-        // const imageY = (center.y - imageRect.top) / this.scale;
-        
         // transform-origin を画像内の中心で設定
         this.transformOrigin = 'center center';
         
@@ -283,22 +287,6 @@ export default {
         // const oldScale = this.scale;
         this.scale = newScale;
         this.initialPinchDistance = currentDistance;
-        
-        /*this.$nextTick(() => {
-          // ズーム後の画像の位置を再取得
-          const newImageRect = image.getBoundingClientRect();
-          
-          // ズーム後のピンチ中心がどこにあるか
-          const newCenterX = newImageRect.left + imageX * this.scale;
-          const newCenterY = newImageRect.top + imageY * this.scale;
-          
-          // ピンチ中心がズーム前と同じ位置に来るようにスクロール補正
-          const deltaX = newCenterX - center.x;
-          const deltaY = newCenterY - center.y;
-          
-          wrapper.scrollLeft -= deltaX;
-          wrapper.scrollTop -= deltaY;
-        });*/
       }
     },
     onTouchEnd(e) {
