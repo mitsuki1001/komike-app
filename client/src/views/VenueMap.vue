@@ -49,7 +49,9 @@
           class="map-inner"
           :style="{
             transform: `scale(${scale})`,
-            transformOrigin: transformOrigin
+            transformOrigin: transformOrigin,
+            width: baseWidth + 'px',
+            height: baseHeight + 'px'
           }"
         >
           <img
@@ -191,6 +193,16 @@ export default {
     }
   },
   mounted() {
+    const image = this.$refs.mapImage;
+    if (image.complete) {
+      this.baseWidth = image.naturalWidth;
+      this.baseHeight = image.naturalHeight;
+    } else {
+      image.onload = () => {
+        this.baseWidth = image.naturalWidth;
+        this.baseHeight = image.naturalHeight;
+      };
+    },
     axios.get(`${baseURL}/circles`)
       .then(response => {
         this.circles = response.data;
