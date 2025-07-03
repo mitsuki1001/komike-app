@@ -292,7 +292,7 @@ export default {
 
         const currentDistance = this.getTouchDistance(e.touches);
         const scaleFactor = currentDistance / this.initialPinchDistance;
-        const newScale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);
+        const newScale = Math.min(Math.max(this.scale * scaleFactor, 0.1), 3);
 
         const center = this.getTouchCenter(e.touches);
         const wrapper = this.$refs.mapWrapper;
