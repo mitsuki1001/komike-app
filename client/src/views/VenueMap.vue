@@ -49,7 +49,7 @@
           class="map-inner"
           :style="{
             transform: `scale(${scale})`,
-            transformOrigin: transformOrigin,
+            transformOrigin: 'top left',
             width: baseWidth + 'px',
             height: baseHeight + 'px'
           }"
@@ -108,7 +108,7 @@ export default {
   name: 'VenueMap',
   data() {
     return {
-      scale: 0.7,
+      scale: 1,
       initialPinchDistance: null,
       isPinching: false,
       currentVenue: 0,
@@ -348,7 +348,7 @@ export default {
       }
     },
     resetZoom() {
-      this.scale = 0.7;
+      this.scale = 1;
       this.transformOrigin = 'center center';
       this.$refs.mapWrapper.scrollLeft = 0;
       this.$refs.mapWrapper.scrollTop = 0;
@@ -398,23 +398,28 @@ export default {
 
       wrapper.scrollLeft = markerX - wrapper.clientWidth / 2;
       wrapper.scrollTop = markerY - wrapper.clientHeight / 2;
+    },
+    methods: {
+      updateImageSize() {
+        const image = this.$refs.mapImage;
+        if (image && image.complete) {
+          this.baseWidth = image.naturalWidth;
+          this.baseHeight = image.naturalHeight;
+          console.log('画像サイズ取得:', this.baseWidth, this.baseHeight);
+        } else if (image) {
+          image.onload = () => {
+            this.baseWidth = image.naturalWidth;
+            this.baseHeight = image.naturalHeight;
+            console.log('画像サイズ取得（onload）:', this.baseWidth, this.baseHeight);
+          };
+        }
+      }
     }
   },
   watch: {
     currentImage() {
       this.$nextTick(() => {
-        const image = this.$refs.mapImage;
-        if (image.complete) {
-          this.baseWidth = image.naturalWidth;
-          this.baseHeight = image.naturalHeight;
-          console.log('画像サイズ取得（watch）:', this.baseWidth, this.baseHeight);
-        } else {
-          image.onload = () => {
-            this.baseWidth = image.naturalWidth;
-            this.baseHeight = image.naturalHeight;
-            console.log('画像サイズ取得（watch onload）:', this.baseWidth, this.baseHeight);
-          };
-        }
+        this.updateImageSize();
       });
     }
   }
@@ -457,9 +462,9 @@ export default {
 }
 
 .map-wrapper {
-  width: 90%;
-  max-width: 800px;
-  height: 60vh;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
   margin: 0 auto;
   overflow: auto;
   /* border: 1px solid #ccc; */
@@ -475,7 +480,7 @@ export default {
 }
 
 .map-inner {
-  position: relative; /* ← 余白をなくすために absolute に変更 */
+  position: absolute; /* ← 余白をなくすために absolute に変更 */
   top: 0;
   left: 0;
   will-change: transform;
