@@ -261,18 +261,14 @@ export default {
         
         // ピンチ中心を取得
         const center = this.getTouchCenter(e.touches);
-        const wrapperRect = this.$refs.mapWrapper.getBoundingClientRect();
+        const innerRect = this.$refs.mapWrapper.getBoundingClientRect();
 
-        // ピンチ中心を mapWrapper 内の相対座標に変換
-        this.pinchCenter = {
-          x: center.x - wrapperRect.left,
-          y: center.y - wrapperRect.top
-        };
+        // ピンチ中心を map-inner の相対座標に変換
+        const originX = center.x - innerRect.left;
+        const originY = center.y - innerRect.top;
 
-        // transformOrigin をピンチ中心に設定
-        this.transformOrigin = `${this.pinchCenter.x}px ${this.pinchCenter.y}px`;
-
-        // this.transformOrigin = 'center center'; // 中央固定
+        this.pinchCenter = { x: originX, y: originY };
+        this.transformOrigin = `${originX}px ${originY}px`;
       }
     },
     onTouchMove(e) {
@@ -283,14 +279,16 @@ export default {
         const scaleFactor = currentDistance / this.initialPinchDistance;
         const newScale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);
         
-        // スクロール補正
         const wrapper = this.$refs.mapWrapper;
-        const dx = this.pinchCenter.x * (newScale - this.scale);
-        const dy = this.pinchCenter.y * (newScale - this.scale);
-
-        wrapper.scrollLeft += dx;
-        wrapper.scrollTop += dy;
-
+        
+        // スクロール補正前にズーム倍率の差分を計算
+        const deltaScale = newScale / this.scale;
+        
+        // スクロール補正
+        wrapper.scrollLeft += this.pinchCenter.x * (deltaScale - 1);
+        wrapper.scrollTop += this.pinchCenter.y * (deltaScale - 1);
+        
+        // 最後に scale を更新
         this.scale = newScale;
         this.initialPinchDistance = currentDistance;
       }
