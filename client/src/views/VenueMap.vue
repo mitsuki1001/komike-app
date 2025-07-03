@@ -257,19 +257,7 @@ export default {
         this.isPinching = true;
         this.initialPinchDistance = this.getTouchDistance(e.touches);
 
-        // 表示領域の中心を transform-origin に設定
-        const wrapper = this.$refs.mapWrapper;
-        const image = this.$refs.mapImage;
-        const wrapperRect = wrapper.getBoundingClientRect();
-        const imageRect = image.getBoundingClientRect();
-
-        const centerX = wrapperRect.left + wrapperRect.width / 2;
-        const centerY = wrapperRect.top + wrapperRect.height / 2;
-
-        const imageX = (centerX - imageRect.left) / this.scale;
-        const imageY = (centerY - imageRect.top) / this.scale;
-
-        this.transformOrigin = `${imageX}px ${imageY}px`;
+        this.transformOrigin = 'center center'; // 中央固定
       }
     },
     onTouchMove(e) {
@@ -282,7 +270,7 @@ export default {
         
         // スケール更新
         // const oldScale = this.scale;
-        this.scale = newScale;
+        // this.scale = newScale;
         this.initialPinchDistance = currentDistance;
       }
     },
