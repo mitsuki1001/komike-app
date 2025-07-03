@@ -51,7 +51,7 @@
             transform: `scale(${scale})`,
             transformOrigin: transformOrigin,
             width: baseWidth + 'px',
-            height: baseHeight + 'px'
+            height: baseHeight + 'px'
           }"
         >
           <img
@@ -119,7 +119,7 @@ export default {
       transformOrigin: 'center center',
       pinchCenter: { x: 0, y: 0 },
       baseWidth: 0,
-      baseHeight: 0,
+      baseHeight: 0,
       venues: [
         {
           name: '東456',
@@ -195,15 +195,15 @@ export default {
   },
   mounted() {
     const image = this.$refs.mapImage;
-    if (image.complete) {
-      this.baseWidth = image.naturalWidth;
-      this.baseHeight = image.naturalHeight;
-    } else {
-      image.onload = () => {
-        this.baseWidth = image.naturalWidth;
-        this.baseHeight = image.naturalHeight;
-      };
-    }
+      if (image.complete) {
+        this.baseWidth = image.naturalWidth;
+        this.baseHeight = image.naturalHeight;
+      } else {
+      image.onload = () => {
+        this.baseWidth = image.naturalWidth;
+        this.baseHeight = image.naturalHeight;
+      };
+    }
     axios.get(`${baseURL}/circles`)
       .then(response => {
         this.circles = response.data;
