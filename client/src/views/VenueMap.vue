@@ -280,9 +280,6 @@ export default {
         const scaleFactor = currentDistance / this.initialPinchDistance;
         const newScale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);
         
-        // transform-origin を画像内の中心で設定
-        this.transformOrigin = 'center center';
-        
         // スケール更新
         // const oldScale = this.scale;
         this.scale = newScale;
