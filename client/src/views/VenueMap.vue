@@ -469,7 +469,7 @@ export default {
 .map-wrapper {
   width: 100%;
   max-width: 100%;
-  height: auto;
+  height: 70vh;
   margin: 0 auto;
   overflow: auto;
   /* border: 1px solid #ccc; */
