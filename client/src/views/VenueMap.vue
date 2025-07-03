@@ -118,7 +118,8 @@ export default {
       dragStart: { x: 0, y: 0, scrollLeft: 0, scrollTop: 0 },
       transformOrigin: 'center center',
       pinchCenter: { x: 0, y: 0 },
-
+      baseWidth: 0,
+      baseHeight: 0,
       venues: [
         {
           name: '東456',
@@ -202,7 +203,7 @@ export default {
         this.baseWidth = image.naturalWidth;
         this.baseHeight = image.naturalHeight;
       };
-    },
+    }
     axios.get(`${baseURL}/circles`)
       .then(response => {
         this.circles = response.data;
