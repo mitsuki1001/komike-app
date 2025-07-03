@@ -263,14 +263,31 @@ export default {
     onTouchMove(e) {
       if (this.isPinching && e.touches.length === 2) {
         e.preventDefault();
-        
+
+        const wrapper = this.$refs.mapWrapper;
+        const image = this.$refs.mapImage;
+
+        const prevScale = this.scale;
         const currentDistance = this.getTouchDistance(e.touches);
         const scaleFactor = currentDistance / this.initialPinchDistance;
-        this.scale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);
-        
+        const newScale = Math.min(Math.max(prevScale * scaleFactor, 0.5), 3);
+
+        // スクロール補正のための中心座標（表示領域の中心）
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const imageRect = image.getBoundingClientRect();
+
+        const centerX = wrapper.scrollLeft + wrapper.clientWidth / 2;
+        const centerY = wrapper.scrollTop + wrapper.clientHeight / 2;
+
+        // スケール変更による差分
+        const scaleDiff = newScale / prevScale;
+
+        // スクロール位置を補正
+        wrapper.scrollLeft = centerX * scaleDiff - wrapper.clientWidth / 2;
+        wrapper.scrollTop = centerY * scaleDiff - wrapper.clientHeight / 2;
+
         // スケール更新
-        // const oldScale = this.scale;
-        // this.scale = newScale;
+        this.scale = newScale;
         this.initialPinchDistance = currentDistance;
       }
     },
