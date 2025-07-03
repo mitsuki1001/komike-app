@@ -48,7 +48,7 @@
         <div
           class="map-inner"
           :style="{
-            transform: `scale(${scale})`,
+            transform: `translate(-50%, -50%) scale(${scale})`,
             transformOrigin: transformOrigin
           }"
         >
@@ -277,7 +277,7 @@ export default {
         const imageY = (center.y - imageRect.top) / this.scale;
         
         // transform-origin を画像内の相対座標で設定
-        this.transformOrigin = `${imageX}px ${imageY}px`;
+        this.transformOrigin = 'center center';
         
         // スケール更新
         // const oldScale = this.scale;
@@ -429,12 +429,13 @@ export default {
 }
 
 .map-inner {
-  position: relative; /* ← 余白をなくすために absolute に変更 */
-  top: 0;
-  left: 0;
+  position: absolute; /* ← 余白をなくすために absolute に変更 */
+  top: 50%;
+  left: 50%;
   will-change: transform;
   margin: 0 !important;
   padding: 0 !important;
+  transform: translate(-50%, -50%) scale(1);
   transform-origin: center center;
 }
 
