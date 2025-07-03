@@ -115,6 +115,8 @@ export default {
       dragging: false,
       dragStart: { x: 0, y: 0, scrollLeft: 0, scrollTop: 0 },
       transformOrigin: 'center center',
+      pinchCenter: { x: 0, y: 0 },
+
       venues: [
         {
           name: '東456',
@@ -262,11 +264,13 @@ export default {
         const wrapperRect = this.$refs.mapWrapper.getBoundingClientRect();
 
         // ピンチ中心を mapWrapper 内の相対座標に変換
-        const originX = center.x - wrapperRect.left;
-        const originY = center.y - wrapperRect.top;
+        this.pinchCenter = {
+          x: center.x - wrapperRect.left,
+          y: center.y - wrapperRect.top
+        };
 
         // transformOrigin をピンチ中心に設定
-        this.transformOrigin = `${originX}px ${originY}px`;
+        this.transformOrigin = `${this.pinchCenter.x}px ${this.pinchCenter.y}px`;
 
         // this.transformOrigin = 'center center'; // 中央固定
       }
@@ -277,11 +281,17 @@ export default {
         
         const currentDistance = this.getTouchDistance(e.touches);
         const scaleFactor = currentDistance / this.initialPinchDistance;
-        this.scale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);
+        const newScale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);
         
-        // スケール更新
-        // const oldScale = this.scale;
-        // this.scale = newScale;
+        // スクロール補正
+        const wrapper = this.$refs.mapWrapper;
+        const dx = this.pinchCenter.x * (newScale - this.scale);
+        const dy = this.pinchCenter.y * (newScale - this.scale);
+
+        wrapper.scrollLeft += dx;
+        wrapper.scrollTop += dy;
+
+        this.scale = newScale;
         this.initialPinchDistance = currentDistance;
       }
     },
