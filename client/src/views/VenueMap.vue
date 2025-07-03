@@ -399,6 +399,24 @@ export default {
       wrapper.scrollLeft = markerX - wrapper.clientWidth / 2;
       wrapper.scrollTop = markerY - wrapper.clientHeight / 2;
     }
+  },
+  watch: {
+    currentImage() {
+      this.$nextTick(() => {
+        const image = this.$refs.mapImage;
+        if (image.complete) {
+          this.baseWidth = image.naturalWidth;
+          this.baseHeight = image.naturalHeight;
+          console.log('画像サイズ取得（watch）:', this.baseWidth, this.baseHeight);
+        } else {
+          image.onload = () => {
+            this.baseWidth = image.naturalWidth;
+            this.baseHeight = image.naturalHeight;
+            console.log('画像サイズ取得（watch onload）:', this.baseWidth, this.baseHeight);
+          };
+        }
+      });
+    }
   }
 };
 </script>
@@ -457,14 +475,13 @@ export default {
 }
 
 .map-inner {
-  position: absolute; /* ← 余白をなくすために absolute に変更 */
+  position: relative; /* ← 余白をなくすために absolute に変更 */
   top: 0;
   left: 0;
   will-change: transform;
   margin: 0 !important;
   padding: 0 !important;
   transform-origin: center center;
-  background-color: rgba(0, 255, 0, 0.1); /* 薄い緑で確認 */
 }
 
 .map-and-info {
