@@ -266,7 +266,7 @@ export default {
         
         const currentDistance = this.getTouchDistance(e.touches);
         const scaleFactor = currentDistance / this.initialPinchDistance;
-        const newScale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);
+        this.scale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);
         
         // スケール更新
         // const oldScale = this.scale;
