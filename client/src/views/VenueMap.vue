@@ -48,7 +48,7 @@
         <div
           class="map-inner"
           :style="{
-            transform: `translate(-50%, -50%) scale(${scale})`,
+            transform: `scale(${scale})`,
             transformOrigin: transformOrigin
           }"
         >
@@ -266,17 +266,17 @@ export default {
         const scaleFactor = currentDistance / this.initialPinchDistance;
         const newScale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3);
         
-        const center = this.getTouchCenter(e.touches);
+        /*const center = this.getTouchCenter(e.touches);
         const wrapper = this.$refs.mapWrapper;
         const image = this.$refs.mapImage;
         const imageRect = image.getBoundingClientRect();
-        // const wrapperRect = wrapper.getBoundingClientRect();
+        // const wrapperRect = wrapper.getBoundingClientRect();*/
         
         // ピンチ中心点を画像内の相対座標に変換（ズーム前）
-        const imageX = (center.x - imageRect.left) / this.scale;
-        const imageY = (center.y - imageRect.top) / this.scale;
+        // const imageX = (center.x - imageRect.left) / this.scale;
+        // const imageY = (center.y - imageRect.top) / this.scale;
         
-        // transform-origin を画像内の相対座標で設定
+        // transform-origin を画像内の中心で設定
         this.transformOrigin = 'center center';
         
         // スケール更新
@@ -284,7 +284,7 @@ export default {
         this.scale = newScale;
         this.initialPinchDistance = currentDistance;
         
-        this.$nextTick(() => {
+        /*this.$nextTick(() => {
           // ズーム後の画像の位置を再取得
           const newImageRect = image.getBoundingClientRect();
           
@@ -296,9 +296,9 @@ export default {
           const deltaX = newCenterX - center.x;
           const deltaY = newCenterY - center.y;
           
-          wrapper.scrollLeft += Math.max(0, wrapper.scrollLeft + deltaX);
-          wrapper.scrollTop += Math.max(0, wrapper.scrollTop + deltaY);
-        });
+          wrapper.scrollLeft -= deltaX;
+          wrapper.scrollTop -= deltaY;
+        });*/
       }
     },
     onTouchEnd(e) {
@@ -429,13 +429,12 @@ export default {
 }
 
 .map-inner {
-  position: absolute; /* ← 余白をなくすために absolute に変更 */
-  top: 50%;
-  left: 50%;
+  position: relative; /* ← 余白をなくすために absolute に変更 */
+  top: 0;
+  left: 0;
   will-change: transform;
   margin: 0 !important;
   padding: 0 !important;
-  transform: translate(-50%, -50%) scale(1);
   transform-origin: center center;
 }
 
