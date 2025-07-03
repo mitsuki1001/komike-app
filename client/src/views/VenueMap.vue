@@ -400,20 +400,20 @@ export default {
       wrapper.scrollTop = markerY - wrapper.clientHeight / 2;
     },
     methods: {
-      updateImageSize() {
-        const image = this.$refs.mapImage;
-        if (image && image.complete) {
-          this.baseWidth = image.naturalWidth;
-          this.baseHeight = image.naturalHeight;
-          console.log('画像サイズ取得:', this.baseWidth, this.baseHeight);
-        } else if (image) {
-          image.onload = () => {
-            this.baseWidth = image.naturalWidth;
-            this.baseHeight = image.naturalHeight;
-            console.log('画像サイズ取得（onload）:', this.baseWidth, this.baseHeight);
-          };
-        }
-      }
+      updateImageSize() {
+        const image = this.$refs.mapImage;
+        if (image && image.complete) {
+          this.baseWidth = image.naturalWidth;
+          this.baseHeight = image.naturalHeight;
+          console.log('画像サイズ取得:', this.baseWidth, this.baseHeight);
+        } else if (image) {
+          image.onload = () => {
+            this.baseWidth = image.naturalWidth;
+            this.baseHeight = image.naturalHeight;
+            console.log('画像サイズ取得（onload）:', this.baseWidth, this.baseHeight);
+          };
+        }
+      }
     }
   },
   watch: {
