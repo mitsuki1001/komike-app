@@ -273,8 +273,8 @@ export default {
         const newScale = Math.min(Math.max(prevScale * scaleFactor, 0.5), 3);
 
         // スクロール補正のための中心座標（表示領域の中心）
-        const wrapperRect = wrapper.getBoundingClientRect();
-        const imageRect = image.getBoundingClientRect();
+        // const wrapperRect = wrapper.getBoundingClientRect();
+        // const imageRect = image.getBoundingClientRect();
 
         const centerX = wrapper.scrollLeft + wrapper.clientWidth / 2;
         const centerY = wrapper.scrollTop + wrapper.clientHeight / 2;
