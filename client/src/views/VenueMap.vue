@@ -399,20 +399,18 @@ export default {
       wrapper.scrollLeft = markerX - wrapper.clientWidth / 2;
       wrapper.scrollTop = markerY - wrapper.clientHeight / 2;
     },
-    methods: {
-      updateImageSize() {
-        const image = this.$refs.mapImage;
-        if (image && image.complete) {
+    updateImageSize() {
+      const image = this.$refs.mapImage;
+      if (image && image.complete) {
+        this.baseWidth = image.naturalWidth;
+        this.baseHeight = image.naturalHeight;
+        console.log('画像サイズ取得:', this.baseWidth, this.baseHeight);
+      } else if (image) {
+        image.onload = () => {
           this.baseWidth = image.naturalWidth;
           this.baseHeight = image.naturalHeight;
-          console.log('画像サイズ取得:', this.baseWidth, this.baseHeight);
-        } else if (image) {
-          image.onload = () => {
-            this.baseWidth = image.naturalWidth;
-            this.baseHeight = image.naturalHeight;
-            console.log('画像サイズ取得（onload）:', this.baseWidth, this.baseHeight);
-          };
-        }
+          console.log('画像サイズ取得（onload）:', this.baseWidth, this.baseHeight);
+        };
       }
     }
   },
