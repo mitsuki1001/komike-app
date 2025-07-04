@@ -49,7 +49,9 @@
           class="map-inner"
           :style="{
             transform: `scale(${scale})`,
-            transformOrigin: 'top left'
+            transformOrigin: 'top left',
+            width: baseWidth + 'px',
+            height: baseHeight + 'px'
           }"
         >
           <img
@@ -114,30 +116,38 @@ export default {
       selectedDay: '1日目',
       dragging: false,
       dragStart: { x: 0, y: 0, scrollLeft: 0, scrollTop: 0 },
+      transformOrigin: 'center center',
+      pinchCenter: { x: 0, y: 0 },
+      baseWidth: 0,
+      baseHeight: 0,
       venues: [
         {
           name: '東456',
           image: require('@/assets/east_456.jpg'),
           prefix: 'ア',
-          filter: char => /^[ア-ヨ]$/.test(char)
+          filter: char => /^[ア-ヨ]$/.test(char),
+          minScale: 0.5
         },
         {
           name: '東7',
           image: require('@/assets/east_7.jpg'),
           prefix: 'A',
-          filter: char => /^[A-W]$/.test(char)
+          filter: char => /^[A-W]$/.test(char),
+          minScale: 0.3
         },
         {
           name: '西12',
           image: require('@/assets/west_12.jpg'),
           prefix: 'あ',
-          filter: char => /^[あ-め]$/.test(char)
+          filter: char => /^[あ-め]$/.test(char),
+          minScale: 0.3
         },
         {
           name: '南12',
           image: require('@/assets/south_12.jpg'),
           prefix: 'a',
-          filter: char => /^[a-t]$/.test(char)
+          filter: char => /^[a-t]$/.test(char),
+          minScale: 0.7
         }
       ]
     };
@@ -145,6 +155,9 @@ export default {
   computed: {
     currentImage() {
       return this.venues[this.currentVenue].image;
+    },
+    minScale() {
+      return this.venues[this.currentVenue].minScale || 0.5;
     },
     visibleCircles() {
       if (!this.circles) return [];
@@ -188,6 +201,18 @@ export default {
     }
   },
   mounted() {
+    const image = this.$refs.mapImage;
+      if (image.complete) {
+        this.baseWidth = image.naturalWidth;
+        this.baseHeight = image.naturalHeight;
+        console.log('画像サイズ取得:', this.baseWidth, this.baseHeight);
+      } else {
+      image.onload = () => {
+        this.baseWidth = image.naturalWidth;
+        this.baseHeight = image.naturalHeight;
+        console.log('画像サイズ取得（onload）:', this.baseWidth, this.baseHeight);
+      };
+    }
     axios.get(`${baseURL}/circles`)
       .then(response => {
         this.circles = response.data;
@@ -245,11 +270,27 @@ export default {
       const dy = touch2.clientY - touch1.clientY;
       return Math.sqrt(dx * dx + dy * dy);
     },
+    getTouchCenter(touches) {
+      const x = (touches[0].clientX + touches[1].clientX) / 2;
+      const y = (touches[0].clientY + touches[1].clientY) / 2;
+      return { x, y };
+    },
     onTouchStart(e) {
       if (e.touches.length === 2) {
         e.preventDefault(); // ブラウザのピンチズームを防ぐ
         this.isPinching = true;
         this.initialPinchDistance = this.getTouchDistance(e.touches);
+        
+        /*// ピンチ中心を取得
+        const center = this.getTouchCenter(e.touches);
+        const innerRect = this.$refs.mapWrapper.getBoundingClientRect();
+
+        // ピンチ中心を map-inner の相対座標に変換
+        const originX = center.x - innerRect.left;
+        const originY = center.y - innerRect.top;
+
+        this.pinchCenter = { x: originX, y: originY };
+        this.transformOrigin = `${originX}px ${originY}px`;*/
       }
     },
     onTouchMove(e) {
@@ -257,8 +298,41 @@ export default {
         e.preventDefault(); // ブラウザのピンチズームを防ぐ
         const currentDistance = this.getTouchDistance(e.touches);
         const scaleFactor = currentDistance / this.initialPinchDistance;
-        this.scale = Math.min(Math.max(this.scale * scaleFactor, 0.5), 3); // 最小0.5〜最大3倍
+        const newScale = Math.min(Math.max(this.scale * scaleFactor, this.minScale), 3);
+
+        const center = this.getTouchCenter(e.touches);
+        const wrapper = this.$refs.mapWrapper;
+        const image = this.$refs.mapImage;
+        const imageRect = image.getBoundingClientRect();
+        // const wrapperRect = wrapper.getBoundingClientRect();
+
+        // ピンチ中心点を画像内の相対座標に変換（ズーム前）
+        const imageX = (center.x - imageRect.left) / this.scale;
+        const imageY = (center.y - imageRect.top) / this.scale;
+
+        // transform-origin を画像内の相対座標で設定
+        this.transformOrigin = `${imageX}px ${imageY}px`;
+
+        // スケール更新
+        // const oldScale = this.scale;
+        this.scale = newScale;
         this.initialPinchDistance = currentDistance;
+
+        this.$nextTick(() => {
+          // ズーム後の画像の位置を再取得
+          const newImageRect = image.getBoundingClientRect();
+        
+          // ズーム後のピンチ中心がどこにあるか
+          const newCenterX = newImageRect.left + imageX * this.scale;
+          const newCenterY = newImageRect.top + imageY * this.scale;
+        
+          // ピンチ中心がズーム前と同じ位置に来るようにスクロール補正
+          const deltaX = newCenterX - center.x;
+          const deltaY = newCenterY - center.y;
+        
+          wrapper.scrollLeft += deltaX;
+          wrapper.scrollTop += deltaY;
+        });
       }
     },
     onTouchEnd(e) {
@@ -281,6 +355,7 @@ export default {
     },
     resetZoom() {
       this.scale = 0.7;
+      this.transformOrigin = 'center center';
       this.$refs.mapWrapper.scrollLeft = 0;
       this.$refs.mapWrapper.scrollTop = 0;
     },
@@ -329,6 +404,27 @@ export default {
 
       wrapper.scrollLeft = markerX - wrapper.clientWidth / 2;
       wrapper.scrollTop = markerY - wrapper.clientHeight / 2;
+    },
+    updateImageSize() {
+      const image = this.$refs.mapImage;
+      if (image && image.complete) {
+        this.baseWidth = image.naturalWidth;
+        this.baseHeight = image.naturalHeight;
+        console.log('画像サイズ取得:', this.baseWidth, this.baseHeight);
+      } else if (image) {
+        image.onload = () => {
+          this.baseWidth = image.naturalWidth;
+          this.baseHeight = image.naturalHeight;
+          console.log('画像サイズ取得（onload）:', this.baseWidth, this.baseHeight);
+        };
+      }
+    }
+  },
+  watch: {
+    currentImage() {
+      this.$nextTick(() => {
+        this.updateImageSize();
+      });
     }
   }
 };
@@ -370,17 +466,18 @@ export default {
 }
 
 .map-wrapper {
-  width: 90%;
-  max-width: 800px;
-  height: 60vh;
+  width: 60%;
+  max-width: 100%;
+  height: 50vh;
   margin: 0 auto;
   overflow: auto;
-  border: 1px solid #ccc;
+  /* border: 1px solid #ccc; */
   position: relative;
-  background-color: #f8f8f8;
+  background-color: transparent;
   user-select: none;
   cursor: grab;
-  padding: 0;
+  padding: 0 !important;
+  margin: 0 !important;
 
   /* 追加: スクロールは有効、ズームはJSで制御 */
   touch-action: pan-x pan-y;
@@ -390,10 +487,10 @@ export default {
   position: absolute; /* ← 余白をなくすために absolute に変更 */
   top: 0;
   left: 0;
-  transform-origin: top left;
   will-change: transform;
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform-origin: center center;
 }
 
 .map-and-info {
@@ -426,11 +523,16 @@ export default {
 }
 
 .venue-map-image {
-  display: block;
+  /* display: block; */
+  position: absolute;
   max-width: none; /* ← 元のサイズを維持 */
   height: auto;
-  margin: 0;
-  padding: 0;
+  top: 0;
+  left: 0;
+  position: absolute;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
 
   /* 追加: タッチイベントをブロックしない */
   pointer-events: none;
@@ -491,6 +593,19 @@ export default {
   padding: 2px 4px;
   font-size: 0.8rem;
   cursor: pointer;
+}
+
+.marker.highlighted {
+  border: 3px solid red;
+  box-shadow: 0 0 10px red;
+  z-index: 20;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
 /* スマホ対応 */

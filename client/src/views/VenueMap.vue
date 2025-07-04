@@ -120,6 +120,7 @@ export default {
       pinchCenter: { x: 0, y: 0 },
       baseWidth: 0,
       baseHeight: 0,
+      highlightedMarkerId: null,
       venues: [
         {
           name: '東456',
@@ -165,8 +166,8 @@ export default {
       const venue = this.venues[this.currentVenue];
       const filterChar = venue.filter;
       const validKeys = Object.keys(placeMap);
-      const targetId = this.$route.query.id;
-      const targetPlace = this.$route.query.place;
+      // const targetId = this.$route.query.id;
+      // const targetPlace = this.$route.query.place;
 
       return this.circles.flatMap(circle => {
         if (circle.day !== this.selectedDay) return [];
@@ -185,7 +186,7 @@ export default {
               console.warn(`placeMap に座標が見つかりません: ${code}`);
               return null;
             }
-            const isHighlighted = circle.id === targetId && circle.place === targetPlace;
+            const isHighlighted = `${circle.id}_${code}` === this.highlightedMarkerId;
             return {
               ...circle,
               id: `${circle.id}_${code}`,
@@ -240,6 +241,12 @@ export default {
           if (venueIndex !== -1) {
             this.currentVenue = venueIndex;
           }
+          
+          const validKeys = Object.keys(placeMap);
+          const matchedCode = validKeys.find(code => targetPlace.includes(code));
+
+          this.highlightedMarkerId = `${targetId}_${matchedCode}`;
+          this.$forceUpdate();
 
           this.$nextTick(() => {
             const targetMarker = this.visibleCircles.find(c =>
@@ -295,8 +302,7 @@ export default {
     },
     onTouchMove(e) {
       if (this.isPinching && e.touches.length === 2) {
-        e.preventDefault();
-
+        e.preventDefault(); // ブラウザのピンチズームを防ぐ
         const currentDistance = this.getTouchDistance(e.touches);
         const scaleFactor = currentDistance / this.initialPinchDistance;
         const newScale = Math.min(Math.max(this.scale * scaleFactor, this.minScale), 3);
@@ -397,6 +403,9 @@ export default {
       }
     },
     focusOnMarker(marker) {
+      this.highlightedMarkerId = marker.id;
+
+      // スクロール処理
       const wrapper = this.$refs.mapWrapper;
       if (!wrapper || !marker.coords) return;
 
@@ -594,6 +603,26 @@ export default {
   padding: 2px 4px;
   font-size: 0.8rem;
   cursor: pointer;
+}
+
+.marker.highlighted {
+  border: 1px solid #ff4d4d !important;
+  box-shadow: 0 0 10px red !important;
+  z-index: 20 !important;
+  /*animation: pulse 1s infinite;*/
+  animation: blink 1s infinite;
+}
+/*
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+*/
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
 }
 
 /* スマホ対応 */
