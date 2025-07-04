@@ -263,6 +263,8 @@ export default {
               wrapper.scrollTop = markerY - wrapper.clientHeight / 2;
             }
           });
+        console.log('highlightedMarkerId:', this.highlightedMarkerId);
+        console.log('visibleCircles:', this.visibleCircles);
         }
       })
       .catch(error => {
