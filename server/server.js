@@ -136,7 +136,11 @@ app.put('/circle/:id/complete', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      `UPDATE circle_tab SET completed = true WHERE id = $1 RETURNING *`,
+      `UPDATE circle_tab 
+       SET completed = true,
+       actual_amount = COALESCE(actual_amount, amount)
+       WHERE id = $1
+       RETURNING *`,
       [id]
     );
     if (result.rowCount === 0) {
