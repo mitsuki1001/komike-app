@@ -31,6 +31,7 @@
       </div>
 
       <button @click="isEditing = true">編集</button>
+      <button @click="completeCircle" style="margin-left: 10px;">完了</button>
     </div>
 
     <!-- モーダル表示 -->
@@ -244,6 +245,21 @@ export default {
     },
   }
 };
+// 完了更新
+async completeCircle() {
+  const id = this.$route.params.id;
+  try {
+    const response = await axios.put(`${baseURL}/circle/${id}/complete`);
+    const updated = response.data;
+
+    this.circle = updated;
+
+    alert("完了にしました（購入金額を自動入力しました）");
+  } catch (error) {
+    console.error("完了更新エラー:", error);
+    alert("完了処理に失敗しました");
+  }
+}
 </script>
 
 <style scoped>
