@@ -243,23 +243,23 @@ export default {
       this.showImageModal = false;
       this.modalImageSrc = '';
     },
+    // 完了更新
+    async completeCircle() {
+      const id = this.$route.params.id;
+      try {
+        const response = await axios.put(`${baseURL}/circle/${id}/complete`);
+        const updated = response.data;
+
+        this.circle = updated;
+
+        alert("完了にしました（購入金額を自動入力しました）");
+      } catch (error) {
+        console.error("完了更新エラー:", error);
+        alert("完了処理に失敗しました");
+      }
+    }
   }
 };
-// 完了更新
-async completeCircle() {
-  const id = this.$route.params.id;
-  try {
-    const response = await axios.put(`${baseURL}/circle/${id}/complete`);
-    const updated = response.data;
-
-    this.circle = updated;
-
-    alert("完了にしました（購入金額を自動入力しました）");
-  } catch (error) {
-    console.error("完了更新エラー:", error);
-    alert("完了処理に失敗しました");
-  }
-}
 </script>
 
 <style scoped>
