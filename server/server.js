@@ -222,7 +222,7 @@ app.put('/circle/:id', upload.array('menu', 5), async (req, res) => {
     }
 
     const updated = result.rows[0];
-    updated.menu = JSON.parse(updated.menu);
+    // updated.menu = JSON.parse(updated.menu); 20251229更新対応 JSON変換いらなくなった
     res.json(updated);
   } catch (error) {
     console.error('更新エラー:', error.stack);
