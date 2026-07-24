@@ -440,7 +440,7 @@ app.put('/circle/:id', upload.array('menu', 5), async (req, res) => {
 
     const query = `
       UPDATE circle_tab
-      SET name = $1, place = $2, amount = $3, memo = $4, menu = $5, registrant = $6, area = $7, day = $8, priority_label = $9, priority_value = $10, buyer = $11, actual_amount = $12, read_permission $13
+      SET name = $1, place = $2, amount = $3, memo = $4, menu = $5, registrant = $6, area = $7, day = $8, priority_label = $9, priority_value = $10, buyer = $11, actual_amount = $12, read_permission = $13
       WHERE id = $14
       RETURNING *
     `;
