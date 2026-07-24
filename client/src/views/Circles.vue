@@ -90,6 +90,7 @@
               <!-- ボタン類 -->
               <button @click="deleteCircle(circle.id)">削除</button>
               <button v-if="!circle.completed" @click="markComplete(circle.id)">完了</button>
+              <button v-if="!circle.completed" @click="markSoldOut(circle.id)">完売</button>
               <button v-else @click="unmarkComplete(circle.id)">取消</button>
               <button @click="goToMap(circle)">マップ</button>
             </div>
@@ -103,7 +104,9 @@
 <script>
 import axios from 'axios';
 
+// const baseURL = 'http://localhost:3000'
 const baseURL = process.env.VUE_APP_API_BASE_URL
+
 
 export default {
   name: 'CirclesList',
@@ -156,10 +159,20 @@ export default {
   methods: {
     async fetchCircles() {
       try {
-        const response = await axios.get(`${baseURL}/circles`);
+        const response = await axios.get(
+          `${baseURL}/circles`,
+          {
+            params: {
+              isAdmin: localStorage.getItem('isAdmin')
+            }
+          }
+        );
         this.circles = response.data;
       } catch (error) {
-        console.error('一覧取得エラー:', error);
+        console.error(
+          '一覧取得エラー:',
+          error
+        );
       }
     },
     async deleteCircle(id) {
@@ -176,12 +189,23 @@ export default {
     async markComplete(id) {
       if (!confirm('このサークルを完了状態にしますか？')) return;
       try {
-        await axios.put(`${baseURL}/circle/${id}/complete`);
+        await axios.put(`${baseURL}/circle/${id}/complete`,{buyer: localStorage.getItem('userName')});
         this.fetchCircles();
         alert('完了状態にしました。');
       } catch (error) {
         console.error('完了更新エラー:', error);
         alert('更新に失敗しました。');
+      }
+    },
+    async markSoldOut(id) {
+      if (!confirm('このサークルを完売状態にしますか？')) return;
+      try {
+        await axios.put(`${baseURL}/circle/${id}/soldout`,{buyer: localStorage.getItem('userName')});
+        this.fetchCircles();
+        alert('完売状態にしました。');
+      } catch (error) {
+        console.error('完売更新エラー:', error);
+        alert('完売更新に失敗しました。');
       }
     },
     async unmarkComplete(id) {
@@ -427,6 +451,18 @@ li.completed .circle-row {
 
 .suggestions-list li:hover {
   background-color: #f0f0f0;
+}
+
+.admin-label {
+  color: red;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.soldout-label {
+  color: #d32f2f;
+  font-weight: bold;
+  margin-left: 10px;
 }
 
 </style>

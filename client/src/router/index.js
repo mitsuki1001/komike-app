@@ -5,6 +5,8 @@ import CircleDetail from '@/views/CircleDetail.vue';
 import VenueMap from '@/views/VenueMap.vue';
 import OcrViewer from '@/views/OcrViewer.vue';
 import Settlement from '@/views/Settlement.vue';
+import UserLogin from '@/views/UserLogin.vue';
+import UserRegister from '@/views/UserRegister.vue';
 
 
 const routes = [
@@ -38,6 +40,16 @@ const routes = [
     path: '/settlement',
     name: 'SettlementPage',
     component: Settlement
+  },
+  {
+  path: '/user-login',
+  name: 'UserLogin',
+  component: UserLogin
+  },
+  {
+    path: '/user-register',
+    name: 'UserRegister',
+    component: UserRegister
   }
 ];
 

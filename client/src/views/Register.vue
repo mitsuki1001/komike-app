@@ -46,6 +46,13 @@
         <label for="registrant">登録者:</label>
         <input id="registrant" v-model="form.registrant" type="text" required />
       </div>
+      <div v-if="isAdmin">
+        <label for="readPermission">閲覧権限:</label>
+        <select id="readPermission" v-model="form.readPermission">
+          <option value="public">公開</option>
+          <option value="admin">管理者のみ</option>
+        </select>
+      </div>
       <div>
         <label for="menu">お品書き (画像複数可):</label>
         <input id="menu" type="file" @change="handleFileChange" accept="image/*" multiple />
@@ -58,7 +65,9 @@
 <script>
 import axios from 'axios';
 
+// const baseURL = 'http://localhost:3000'
 const baseURL = process.env.VUE_APP_API_BASE_URL
+
 
 export default {
   name: 'RegisterForm',
@@ -73,7 +82,8 @@ export default {
         area: '',
         day:'',
         priorityLabel: '最優先',
-        priorityValue: 10
+        priorityValue: 10,
+        readPermission: 'public'
       },
       priorityMap: {
         '最優先': 10,
@@ -84,6 +94,17 @@ export default {
       menuFiles: []
     };
   },
+
+  created() 
+  {
+    const userName = localStorage.getItem('userName');
+    if (userName) 
+    {
+      this.form.registrant = userName;
+    }
+    this.isAdmin = localStorage.getItem('isAdmin') === 'true';
+  },
+
   methods: {
     handleFileChange(event) {
       this.menuFiles = Array.from(event.target.files);
@@ -100,6 +121,7 @@ export default {
         formData.append('priorityLabel', this.form.priorityLabel);
         formData.append('priorityValue', this.priorityMap[this.form.priorityLabel]);
         formData.append('registrant', this.form.registrant);
+        formData.append('readPermission', this.form.readPermission);
         this.menuFiles.forEach(file => {
           formData.append('menu', file);
         });
@@ -117,11 +139,12 @@ export default {
           place: '',
           amount: null,
           memo: '',
-          registrant: '',
+          registrant: localStorage.getItem('userName') || '',
           area: '',
           day: '',
           priorityLabel: '最優先',
-          priorityValue: 10
+          priorityValue: 10,
+          readPermission: 'public'
         };
         this.menuFiles = [];
       } catch (error) {

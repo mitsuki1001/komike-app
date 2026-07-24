@@ -102,6 +102,7 @@
 import axios from 'axios';
 import placeMap from '@/assets/placeMap.json';
 
+// const baseURL = 'http://localhost:3000'
 const baseURL = process.env.VUE_APP_API_BASE_URL
 
 export default {

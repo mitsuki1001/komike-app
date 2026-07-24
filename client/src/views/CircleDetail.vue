@@ -32,6 +32,7 @@
 
       <button @click="isEditing = true">編集</button>
       <button @click="completeCircle" style="margin-left: 10px;">完了</button>
+      <button @click="soldOutCircle" style="margin-left: 10px;">完売</button>
     </div>
 
     <!-- モーダル表示 -->
@@ -63,7 +64,13 @@
         <label>登録者: <input v-model="form.registrant" required /></label><br />
         <label>購入者: <input v-model="form.buyer" /></label><br />
         <label>購入金額: <input v-model.number="form.actualAmount" type="number" required /></label><br />
-
+        <div v-if="isAdmin">
+          <label>閲覧権限:</label>
+          <select v-model="form.readPermission">
+            <option value="public">公開</option>
+            <option value="admin">管理者のみ</option>
+          </select>
+        </div>
         <div>
           <p>既存画像（削除可能）:</p>
           <div v-for="(img, index) in editableImages" :key="index" style="margin-bottom: 10px;">
@@ -87,7 +94,7 @@
 
 <script>
 import axios from 'axios';
-
+// const baseURL = 'http://localhost:3000'
 const baseURL = process.env.VUE_APP_API_BASE_URL
 
 export default {
@@ -97,6 +104,7 @@ export default {
       circle: null,
       currentImageIndex: 0,
       isEditing: false,
+      isAdmin: localStorage.getItem('isAdmin') === 'true',
       form: {
         name: '',
         place: '',
@@ -108,7 +116,8 @@ export default {
         priorityLabel: '最優先',
         priorityValue: 10,
         buyer: '',
-        actualAmount: null
+        actualAmount: null,
+        readPermission: 'public'
       },
       priorityMap: {
         '最優先': 10,
@@ -132,7 +141,7 @@ export default {
     async fetchCircle() {
       const id = this.$route.params.id;
       try {
-        const response = await axios.get(`${baseURL}/circle/${id}`);
+        const response = await axios.get(`${baseURL}/circle/${id}`,{params: {isAdmin:localStorage.getItem('isAdmin')}});
         const data = response.data;
         if (typeof data.menu === 'string') {
           data.menu = JSON.parse(data.menu);
@@ -149,7 +158,8 @@ export default {
           priorityLabel: data.priorityLabel || '最優先',
           priorityValue: data.priorityValue || 10,
           buyer: data.buyer || '',
-          actualAmount: data.actualAmount || null
+          actualAmount: data.actualAmount || null,
+          readPermission: data.read_permission || 'public'
         };
         this.editableImages = [...data.menu];
       } catch (error) {
@@ -177,6 +187,7 @@ export default {
         formData.append('priorityValue', this.form.priorityValue);
         formData.append('buyer', this.form.buyer);
         formData.append('actualAmount', this.form.actualAmount);
+        formData.append('readPermission', this.form.readPermission);
 
         // ✅ 既存画像（Base64）を Blob に変換して追加
         this.editableImages.forEach((base64, index) => {
@@ -247,15 +258,33 @@ export default {
     async completeCircle() {
       const id = this.$route.params.id;
       try {
-        const response = await axios.put(`${baseURL}/circle/${id}/complete`);
-        const updated = response.data;
-
-        this.circle = updated;
-
-        alert("完了にしました（購入金額を自動入力しました）");
+        const response = await axios.put(
+          `${baseURL}/circle/${id}/complete`,
+          {
+            buyer: localStorage.getItem('userName')
+          }
+        );
+        this.circle = response.data;
+        alert("完了にしました");
       } catch (error) {
         console.error("完了更新エラー:", error);
         alert("完了処理に失敗しました");
+      }
+    },
+    async soldOutCircle() {
+      const id = this.$route.params.id;
+      try {
+        const response = await axios.put(
+          `${baseURL}/circle/${id}/soldout`,
+          {
+            buyer: localStorage.getItem('userName')
+          }
+        );
+        this.circle = response.data;
+        alert("完売にしました");
+      } catch (error) {
+        console.error("完売更新エラー:", error);
+        alert("完売処理に失敗しました");
       }
     }
   }
