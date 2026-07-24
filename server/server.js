@@ -4,6 +4,9 @@ const cors = require('cors');
 const multer = require('multer');
 const Tesseract = require('tesseract.js');
 const path = require('path');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = 'circle-management-secret-2026';
 
 
 const upload = multer({
@@ -13,7 +16,6 @@ const upload = multer({
 
 const app = express();
 app.use(express.json());
-
 
 const allowedOrigins = [
   'https://comike-client.onrender.com',
@@ -40,16 +42,168 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
+// ユーザー登録
+app.post('/register', async (req, res) => {
+  try {
+    const { name, password } = req.body;
+
+    if (!name || !password) {
+      return res.status(400).json({
+        message: '名前とパスワードは必須です'
+      });
+    }
+
+    const exists = await pool.query(
+      'SELECT id FROM users WHERE name = $1',
+      [name]
+    );
+
+    if (exists.rowCount > 0) {
+      return res.status(409).json({
+        message: '既に存在するユーザーです'
+      });
+    }
+
+    const hashedPassword =
+      await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+      `
+      INSERT INTO users
+      (
+        name,
+        password_hash
+      )
+      VALUES
+      (
+        $1,
+        $2
+      )
+      RETURNING
+      id,
+      name,
+      is_admin,
+      created_at
+      `,
+      [
+        name,
+        hashedPassword
+      ]
+    );
+
+    res.json(result.rows[0]);
+
+  } catch (error) {
+    console.error('ユーザー登録エラー:', error);
+
+    res.status(500).json({
+      message: 'ユーザー登録に失敗しました'
+    });
+  }
+});
+// ログイン
+app.post('/login', async (req, res) => {
+  try {
+
+    const { name, password } = req.body;
+
+    const result = await pool.query(
+      'SELECT * FROM users WHERE name = $1',
+      [name]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(401).json({
+        message: 'ユーザー名またはパスワードが違います'
+      });
+    }
+
+    const user = result.rows[0];
+
+    const isValidPassword =
+      await bcrypt.compare(
+        password,
+        user.password_hash
+      );
+
+    if (!isValidPassword) {
+      return res.status(401).json({
+        message: 'ユーザー名またはパスワードが違います'
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        name: user.name,
+        isAdmin: user.is_admin
+      },
+      JWT_SECRET,
+      {
+        expiresIn: '30d'
+      }
+    );
+
+    res.json({
+      token,
+      id: user.id,
+      name: user.name,
+      isAdmin: user.is_admin
+    });
+
+  } catch (error) {
+    console.error('ログインエラー:', error);
+
+    res.status(500).json({
+      message: 'ログインに失敗しました'
+    });
+  }
+});
+
+// ログインユーザー取得
+app.get('/me', async (req, res) => {
+
+  const authHeader =
+    req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({
+      message: '認証情報がありません'
+    });
+  }
+
+  try {
+
+    const token =
+      authHeader.replace('Bearer ', '');
+
+    const decoded =
+      jwt.verify(
+        token,
+        JWT_SECRET
+      );
+
+    res.json(decoded);
+
+  } catch (error) {
+
+    res.status(401).json({
+      message: 'トークンが無効です'
+    });
+
+  }
+});
+
 // 新規登録
 app.post('/add-circle', upload.array('menu', 5), async (req, res) => {
   try {
-    const { name, place, amount, memo, registrant, area, day, priorityLabel, priorityValue, buyer, actualAmount } = req.body;
+    const { name, place, amount, memo, registrant, area, day, priorityLabel, priorityValue, buyer, actualAmount, readPermission } = req.body;
     const menuImages = req.files.map(file => file.buffer);
     const menuBase64Array = menuImages.map(buf => buf.toString('base64'));
 
     const query = `
-      INSERT INTO circle_tab (name, place, amount, memo, menu, registrant, area, day, priority_label, priority_value, buyer, actual_amount)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      INSERT INTO circle_tab (name, place, amount, memo, menu, registrant, area, day, priority_label, priority_value, buyer, actual_amount,read_permission)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING *
     `;
     const result = await pool.query(query, [
@@ -64,7 +218,8 @@ app.post('/add-circle', upload.array('menu', 5), async (req, res) => {
       priorityLabel,
       parseInt(priorityValue),
       buyer,
-      actualAmount ? parseInt(actualAmount) : null
+      actualAmount ? parseInt(actualAmount) : null,
+      readPermission || 'public'
     ]);
     res.json(result.rows[0]);
   } catch (error) {
@@ -74,48 +229,97 @@ app.post('/add-circle', upload.array('menu', 5), async (req, res) => {
 });
 
 // 一覧取得
+// 一覧取得
 app.get('/circles', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM circle_tab ORDER BY id DESC');
+    const isAdmin =
+      req.query.isAdmin === 'true';
+    let result;
+    if (isAdmin) {
+      result = await pool.query(`
+        SELECT *
+        FROM circle_tab
+        ORDER BY id DESC
+      `);
+    } else {
+      result = await pool.query(`
+        SELECT *
+        FROM circle_tab
+        WHERE read_permission = 'public'
+        ORDER BY id DESC
+      `);
+    }
     const circles = result.rows.map(row => {
       try {
-        if (typeof row.menu === 'string' && row.menu.trim().startsWith('[')) {
+        if (
+          typeof row.menu === 'string' &&
+          row.menu.trim().startsWith('[')
+        ) {
           row.menu = JSON.parse(row.menu);
         } else {
           row.menu = [];
         }
       } catch (e) {
-        console.error(`menuのJSONパースエラー（id: ${row.id}）:`, e);
+        console.error(
+          `menuのJSONパースエラー（id: ${row.id}）:`,
+          e
+        );
         row.menu = [];
       }
       return row;
     });
     res.json(circles);
   } catch (error) {
-    console.error('一覧取得エラー:', error.stack);
-    res.status(500).send('サーバーエラーが発生しました');
+    console.error(
+      '一覧取得エラー:',
+      error.stack
+    );
+    res.status(500).send(
+      'サーバーエラーが発生しました'
+    );
   }
 });
-
 // 詳細取得
 app.get('/circle/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query('SELECT * FROM circle_tab WHERE id = $1', [id]);
+    const isAdmin =
+      req.query.isAdmin === 'true';
+    const result = await pool.query(
+      'SELECT * FROM circle_tab WHERE id = $1',
+      [id]
+    );
     if (result.rows.length === 0) {
-      return res.status(404).send('データが見つかりません');
+      return res
+        .status(404)
+        .send('データが見つかりません');
     }
     const circle = result.rows[0];
+    // 管理者限定チェック
+    if (
+      circle.read_permission === 'admin'
+      &&
+      !isAdmin
+    ) {
+      return res
+        .status(403)
+        .send('閲覧権限がありません');
+    }
     if (typeof circle.menu === 'string') {
-      circle.menu = JSON.parse(circle.menu);
+      circle.menu =
+        JSON.parse(circle.menu);
     }
     res.json(circle);
   } catch (error) {
-    console.error('詳細取得エラー:', error.stack);
-    res.status(500).send('サーバーエラーが発生しました');
+    console.error(
+      '詳細取得エラー:',
+      error.stack
+    );
+    res.status(500).send(
+      'サーバーエラーが発生しました'
+    );
   }
 });
-
 // 削除
 app.delete('/circle/:id', async (req, res) => {
   try {
@@ -135,13 +339,15 @@ app.delete('/circle/:id', async (req, res) => {
 app.put('/circle/:id/complete', async (req, res) => {
   try {
     const { id } = req.params;
+    const { buyer } = req.body;
     const result = await pool.query(
       `UPDATE circle_tab 
        SET completed = true,
+       buyer = $2,
        actual_amount = COALESCE(actual_amount, amount)
        WHERE id = $1
        RETURNING *`,
-      [id]
+      [id, buyer || null]
     );
     if (result.rowCount === 0) {
       return res.status(404).send('指定されたデータが見つかりません');
@@ -153,6 +359,39 @@ app.put('/circle/:id/complete', async (req, res) => {
     res.json(circle);
   } catch (error) {
     console.error('完了更新エラー:', error.stack);
+    res.status(500).send('サーバーエラーが発生しました');
+  }
+});
+
+// 完売状態更新
+app.put('/circle/:id/soldout', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { buyer } = req.body;
+
+    const result = await pool.query(
+      `UPDATE circle_tab
+       SET completed = true,
+           buyer = $2,
+           actual_amount = 0
+       WHERE id = $1
+       RETURNING *`,
+      [id, buyer || null]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).send('指定されたデータが見つかりません');
+    }
+
+    const circle = result.rows[0];
+
+    if (typeof circle.menu === 'string') {
+      circle.menu = JSON.parse(circle.menu);
+    }
+
+    res.json(circle);
+  } catch (error) {
+    console.error('完売更新エラー:', error.stack);
     res.status(500).send('サーバーエラーが発生しました');
   }
 });
@@ -184,7 +423,7 @@ app.put('/circle/:id/uncomplete', async (req, res) => {
 app.put('/circle/:id', upload.array('menu', 5), async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, place, amount, memo, existingMenu, registrant, area, day, priorityLabel, priorityValue, buyer, actualAmount } = req.body;
+    const { name, place, amount, memo, existingMenu, registrant, area, day, priorityLabel, priorityValue, buyer, actualAmount, readPermission } = req.body;
 
     let existingImages = [];
     if (existingMenu) {
@@ -201,8 +440,8 @@ app.put('/circle/:id', upload.array('menu', 5), async (req, res) => {
 
     const query = `
       UPDATE circle_tab
-      SET name = $1, place = $2, amount = $3, memo = $4, menu = $5, registrant = $6, area = $7, day = $8, priority_label = $9, priority_value = $10, buyer = $11, actual_amount = $12
-      WHERE id = $13
+      SET name = $1, place = $2, amount = $3, memo = $4, menu = $5, registrant = $6, area = $7, day = $8, priority_label = $9, priority_value = $10, buyer = $11, actual_amount = $12, read_permission $13
+      WHERE id = $14
       RETURNING *
     `;
     const result = await pool.query(query, [
@@ -218,6 +457,7 @@ app.put('/circle/:id', upload.array('menu', 5), async (req, res) => {
       priorityValue,
       buyer,
       actualAmount ? parseInt(actualAmount) : null,
+      readPermission || 'public',
       id
     ]);
 
@@ -396,6 +636,58 @@ app.get('/payment', async (req, res) => {
     res.status(500).send('精算データの取得に失敗しました');
   }
 });
+
+function authenticateToken(
+  req,
+  res,
+  next
+) {
+
+  const authHeader =
+    req.headers.authorization;
+
+  if (!authHeader) {
+    return res.sendStatus(401);
+  }
+
+  const token =
+    authHeader.replace(
+      'Bearer ',
+      ''
+    );
+
+  jwt.verify(
+    token,
+    JWT_SECRET,
+    (err, user) => {
+
+      if (err) {
+        return res.sendStatus(403);
+      }
+
+      req.user = user;
+
+      next();
+    }
+  );
+}
+
+function requireAdmin(
+  req,
+  res,
+  next
+) {
+
+  if (!req.user.isAdmin) {
+
+    return res.status(403).json({
+      message: '管理者権限が必要です'
+    });
+
+  }
+
+  next();
+}
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
